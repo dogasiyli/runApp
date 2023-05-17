@@ -22,7 +22,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["android.permission.INTERNET","android.permission.ACCESS_FINE_LOCATION"]
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.doga.siyli.runApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
