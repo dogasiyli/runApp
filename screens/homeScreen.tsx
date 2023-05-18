@@ -1,16 +1,23 @@
-import { View, Text } from 'react-native';
+import { View, Text, Button } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 
-import { useLocation } from '../asyncOperations/requests';
+import { useLocation, useMediaLibrary } from '../asyncOperations/requests';
+
 import { INIT_POSITION } from '../assets/constants';
 
 import { showGPSResults } from '../functions/display/showText';
 import { BUTTON_toggleSavePosition } from '../functions/display/buttons';
+import { saveToFile } from '../asyncOperations/fileOperations';
+import { styles } from '../sheets/styles';
 
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
+
+  const [permittedMediaLibrary, setPermittedMediaLibrary] = useState(false);
+
+
   const [location, setLocation] = useState(INIT_POSITION);
   const [recordPosition, setRecordPosition] = useState(false);
   const [locationHistory, setLocationHistory] = useState(new Array(location));
@@ -19,6 +26,16 @@ export function HomeScreen() {
   const handleToggle = () => {
     setRecordPosition((current) => !current);
   };
+
+  useEffect(() => {
+    if (!permittedMediaLibrary)
+    {
+        const getPermit = async () => {
+            await useMediaLibrary(setPermittedMediaLibrary);
+        }
+        getPermit();
+    }
+  }, []);
 
   useEffect(() => {
     if (recordPosition)
@@ -48,6 +65,11 @@ export function HomeScreen() {
           <View>
             <Text>{screenText2}</Text>
           </View>
+      </View>
+      <View style={styles.container}>
+        <Text>Button Example</Text>
+        {/* Button whith handler function named onPressLearnMore*/}
+        <Button disabled={!permittedMediaLibrary && (recordPosition || locationHistory.length<=1)} onPress={() => saveToFile(locationHistory)} title="RecordPositions" color = {this.disabled ? "#ff0000" : "#00ffff"} />
       </View>
     </View>
   );
