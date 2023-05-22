@@ -3,9 +3,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 
-import { useLocation, useMediaLibrary } from '../asyncOperations/requests';
 
-import { INIT_POSITION } from '../assets/constants';
+import { getPermits, useLocation } from '../asyncOperations/requests';
+
+import { INIT_PERMITS, INIT_POSITION } from '../assets/constants';
 
 import { showGPSResults } from '../functions/display/showText';
 import { BUTTON_toggleSavePosition } from '../functions/display/buttons';
@@ -15,27 +16,20 @@ import { styles } from '../sheets/styles';
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
 
-  const [permittedMediaLibrary, setPermittedMediaLibrary] = useState(false);
-
-
   const [location, setLocation] = useState(INIT_POSITION);
+  const [permits, setPermits] = useState(INIT_PERMITS);
   const [recordPosition, setRecordPosition] = useState(false);
   const [locationHistory, setLocationHistory] = useState(new Array(location));
   const [screenText2, setScreenText2] = useState("No locations yet");
 
-  const handleToggle = () => {
-    setRecordPosition((current) => !current);
-  };
-
-  useEffect(() => {
-    if (!permittedMediaLibrary)
-    {
-        const getPermit = async () => {
-            await useMediaLibrary(setPermittedMediaLibrary);
-        }
-        getPermit();
+  useEffect (() => {
+    const _getPermits = async () => {
+      const _permits = await getPermits('locationForeGround,locationBackGround,mediaLibrary');
+      setPermits(_permits);
     }
-  }, []);
+    _getPermits()
+    .catch(console.error);
+  }, [])
 
   useEffect(() => {
     if (recordPosition)
@@ -67,9 +61,9 @@ export function HomeScreen() {
           </View>
       </View>
       <View style={styles.container}>
-        <Text>Button Example</Text>
+        <Text>Save positions to text file</Text>
         {/* Button whith handler function named onPressLearnMore*/}
-        <Button disabled={!permittedMediaLibrary && (recordPosition || locationHistory.length<=1)} onPress={() => saveToFile(locationHistory)} title="RecordPositions" color = {this.disabled ? "#ff0000" : "#00ffff"} />
+        <Button disabled={!permits["mediaLibrary"] && (recordPosition || locationHistory.length<=1)} onPress={() => saveToFile(locationHistory)} title="RecordPositions" color = {this.disabled ? "#ff0000" : "#00ffff"} />
       </View>
     </View>
   );

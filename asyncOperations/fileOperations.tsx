@@ -62,27 +62,23 @@ export const saveToFile = async (arrayOfDictionaries:object) => {
 const saveAndroidFile = async (fileUri, fileName) => {
     try {
       const fileString = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.Base64 });
-      console.log("fileString:",fileString)
       const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync("Download");
-      console.log("permissions:",permissions)
       if (!permissions.granted) {
         return;
       }
-
+      console.log("saveAndroidFile-permissions:",permissions)
       try {
         await StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, 'text/plain')
           .then(async (uri) => {
-            console.log("permissions.directoryUri:",permissions.directoryUri)
-            console.log("+++uri:",uri)
             await FileSystem.writeAsStringAsync(uri, fileString, { encoding: FileSystem.EncodingType.Base64 });
             alert('Report Downloaded Successfully')
           })
           .catch((e) => {
+            alert('Report Could not be downloaded :(')
           });
       } catch (e) {
         throw new Error(e);
       }
-
     } catch (err) {
     }
   }
