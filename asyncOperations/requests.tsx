@@ -1,11 +1,26 @@
 import * as Location from "expo-location";
 import * as MediaLibrary from 'expo-media-library';
-import { INIT_PERMITS } from "../assets/constants";
+import { INIT_PERMITS, INIT_TIMES } from "../assets/constants";
 
-export const useLocation = async (setLocation, fore_back:string) => {
-  const currentLocation = await Location.getCurrentPositionAsync({});
-  setLocation(currentLocation);
-};
+export function useLocationForeground(): Promise<Location.LocationObject> {
+  return new Promise<Location.LocationObject>(async (resolve, reject) => {
+    try {
+      const watchId = await Location.watchPositionAsync(
+        {
+          accuracy: 6,
+          timeInterval: INIT_TIMES["gpsUpdateMS"],
+          distanceInterval: 3,
+        },
+        (current_loc) => {
+          resolve(current_loc); // Resolve the promise with the location
+        }
+      );
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 
 const useMediaLibrary = async () => {
   const mediaLibraryResult = await MediaLibrary.requestPermissionsAsync(true);
@@ -21,21 +36,21 @@ export const getPermits = async (permitList:string) => {
   {
     console.log("requestForegroundPermissionsAsync...")
     let {status} = await Location.requestForegroundPermissionsAsync();
-    console.log("satus of requestForegroundPermissionsAsync:", status)
+    console.log("status of requestForegroundPermissionsAsync:", status)
     permits["locationFore"] = status=='granted';
   }
   if (permitList.includes('locationBackGround'))
   {
     console.log("requestBackgroundPermissionsAsync...")
     let {status} = await Location.requestBackgroundPermissionsAsync();
-    console.log("satus of requestBackgroundPermissionsAsync:", status)
+    console.log("status of requestBackgroundPermissionsAsync:", status)
     permits["locationBack"] = status=='granted';
   }
   if (permitList.includes('mediaLibrary'))
   {
-    console.log("requestuseMediaLibrary...")
+    console.log("request use MediaLibrary...")
     let {granted} = await useMediaLibrary();
-    console.log("satus of useMediaLibrary:", granted)
+    console.log("status of useMediaLibrary:", granted)
     permits["mediaLibrary"] = granted;
   }
   console.log("permits:", permits)

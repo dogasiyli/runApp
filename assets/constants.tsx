@@ -16,4 +16,7 @@ export const INIT_PERMITS = {
     "locationFore": false,
     "locationBack": false,
     "mediaLibrary": false,
-  }
+}
+export const INIT_TIMES = {
+    "gpsUpdateMS": 500,
+}
