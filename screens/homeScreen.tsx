@@ -75,16 +75,6 @@ export function HomeScreen() {
     }
   }, [current_location]);
 
-
-  // Check if the moveableImages array is still empty
-  if (moveableImages.length === 0) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top }}>
       <StatusBar style="auto" />
@@ -104,15 +94,7 @@ export function HomeScreen() {
                      alignItems:"baseline", 
                      alignContent:"flex-start", 
                      top: insets.top }}>
-      {
-        moveableImages.map((image, index) => (
-          <MoveableImage 
-            key={index}
-            id={index}
-            renderBool={true}
-          />
-        ))
-      }
+      {moveableImages.map((image, index) => (<MoveableImage key={index} id={index} renderBool={true}/>))}
       </View>
     </View>
   );

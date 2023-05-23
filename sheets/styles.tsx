@@ -33,15 +33,18 @@ export const styles = StyleSheet.create({
       width: 30,
       height: 30,
     },
+    Moveable_selectedImageWrapper: {
+      width: 60,
+      height: 60,
+      borderColor: 'blue',
+      borderWidth: 2,
+      borderRadius: 30,
+    },
     Moveable_imageWrapper: {
       width: 60, // Adjust the desired width
       height: 60, // Adjust the desired height
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    Moveable_selectedImageWrapper: {
-      borderColor: 'blue',
-      borderWidth: 2,
     },
   });
   
