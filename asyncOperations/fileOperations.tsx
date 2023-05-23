@@ -1,8 +1,7 @@
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 const { StorageAccessFramework } = FileSystem;
 
-const getFormattedDateTime = () => {
+export const getFormattedDateTime = ():string => {
     const date = new Date();
 
     // Format date and time in the format: yyyyMMdd_hhmmss

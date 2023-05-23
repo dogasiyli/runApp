@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-const getReadableTime = (timeStamp:number) => {
+const getReadableTime = (timeStamp:number) : string => {
     var t = new Date(timeStamp);
     var hours = t.getHours();
     var minutes = t.getMinutes();
