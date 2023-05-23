@@ -1,50 +1,51 @@
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
+export const style_container = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    container2: {
-      flex: 1,
-      backgroundColor: '#f0f',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    Moveable_touchable: {
-      position: 'absolute',
-    },
-    Moveable_button: {
-      position:"absolute", 
-      width: 50,
-      height: 50,
-      alignItems: 'center',
-      justifyContent: 'center',
       backgroundColor: 'transparent',
+      alignContent: 'center',
     },
-    Moveable_image: {
-      width: 30,
-      height: 30,
-    },
-    Moveable_selectedImageWrapper: {
-      width: 60,
-      height: 60,
-      borderColor: 'blue',
-      borderWidth: 2,
-      borderRadius: 30,
-    },
-    Moveable_imageWrapper: {
-      width: 60, // Adjust the desired width
-      height: 60, // Adjust the desired height
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-  });
+});
+
+export const style_home = StyleSheet.create({
+  button: {
+    position:"absolute", 
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'purple',
+  },
+});
+  
+
+export const style_movable = StyleSheet.create({
+  touchable: {
+    position: 'absolute',
+  },
+  button: {
+    position:"absolute", 
+    width: 50,
+    height: 50,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    backgroundColor: 'transparent',
+  },
+  image: {
+    width: 30,
+    height: 30,
+  },
+  selectedImageWrapper: {
+    width: 60,
+    height: 60,
+    borderColor: 'blue',
+    borderWidth: 2,
+    borderRadius: 30,
+  },
+  imageWrapper: {
+    width: 60, // Adjust the desired width
+    height: 60, // Adjust the desired height
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
   

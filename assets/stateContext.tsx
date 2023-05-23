@@ -42,9 +42,9 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [arr_location_history, set_location_history] = useState(new Array(INIT_POSITION));
 
     var [moveableImages, setMoveableImages] = useState([
-      {positionX: 0,positionY: 0,selected: false,},
-      {positionX: 260,positionY: 0,selected: false,},
-      {positionX: 130,positionY: 700,selected: false,},]);
+      {positionX: 75,positionY: 250,selected: false,},
+      {positionX: 275,positionY: 250,selected: false,},
+      {positionX: 175,positionY: 550,selected: false,},]);
 
   return (
     <StateContext.Provider

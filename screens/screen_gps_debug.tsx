@@ -10,21 +10,21 @@ import { INIT_TIMES } from '../assets/constants';
 
 
 import { showGPSResults } from '../functions/display/showText';
-import { BT_toggleSavePosition, MoveableImage } from '../functions/display/buttons';
+import { BT_toggleSavePosition } from '../functions/display/buttons';
 import { saveToFile, getFormattedDateTime } from '../asyncOperations/fileOperations';
-import { styles } from '../sheets/styles';
-
+import { style_container } from '../sheets/styles';
 
 import { useAppState } from '../assets/stateContext';
 
 
-export function HomeScreen() {
+export function Screen_GPS_Debug({route}) {
   const insets = useSafeAreaInsets();
-  const [screenText2, setScreenText2] = useState("No locations yet");
+  const [screenText, setscreenText] = useState("No locations yet");
   const { permits, set_permits, 
           current_location, set_current_location, 
-          bool_record_locations, arr_location_history,
-          moveableImages } = useAppState();
+          bool_record_locations, arr_location_history
+        } = useAppState();
+  const someText = route.params.someText;
 
   useEffect(() => {
     console.log("START : ", getFormattedDateTime())
@@ -70,7 +70,7 @@ export function HomeScreen() {
       arr_location_history.push(current_location);
       if (arr_location_history.length%2==0)
       {
-          setScreenText2("Num of locations:"+arr_location_history.length);
+          setscreenText("Num of locations:"+arr_location_history.length);
       }
     }
   }, [current_location]);
@@ -82,19 +82,12 @@ export function HomeScreen() {
       <View style={{alignSelf:"center", alignItems:"center", alignContent:"center", marginTop: '50%', width: '100%'}}>
           {showGPSResults(current_location)}
           <View>
-            <Text>{screenText2}</Text>
+            <Text>{screenText}</Text>
           </View>
       </View>
-      <View style={styles.container}>
-        <Text>Save positions to text file</Text>
+      <View style={style_container.container}>
+        <Text>{someText}</Text>
         <Button disabled={!permits["mediaLibrary"] && (bool_record_locations || arr_location_history.length<=1)} onPress={() => saveToFile(arr_location_history)} title="RecordPositions" color = {this.disabled ? "#ff0000" : "#00ffff"} />
-      </View>
-      <View style={{ flex: 1, position:"absolute",
-                     left:insets.left, 
-                     alignItems:"baseline", 
-                     alignContent:"flex-start", 
-                     top: insets.top }}>
-      {moveableImages.map((image, index) => (<MoveableImage key={index} id={index} renderBool={true}/>))}
       </View>
     </View>
   );

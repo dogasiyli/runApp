@@ -3,7 +3,7 @@ import { Switch } from 'react-native-switch';
 import { useAppState } from '../../assets/stateContext';
 import React, { useContext, useRef, useState } from 'react';
 
-import { styles } from '../../sheets/styles';
+import { style_movable } from '../../sheets/styles';
 
 const button_images = {
   "moveable_default": require('../../assets/pngs/defaultMoveable.png'),
@@ -98,14 +98,13 @@ export const MoveableImage: React.FunctionComponent<MoveableImageProps> = ({id, 
     : button_images['moveable_default'];
 
   return (
-    <View style={[styles.Moveable_button, 
-                    {left: position.x, top: position.y }]} >
+    <View style={[style_movable.button, {left: position.x, top: position.y }]} >
       <TouchableHighlight
         underlayColor={selected ? 'rgba(255, 0, 0, 0.5)' : 'rgba(0, 255, 255, 0.5)'}
-        style={styles.Moveable_touchable}
+        style={style_movable.touchable}
       >
-        <View style={[styles.Moveable_imageWrapper, selected && styles.Moveable_selectedImageWrapper]} {...panResponder.panHandlers}>
-          <Image source={buttonImage} style={styles.Moveable_image} />
+        <View style={[style_movable.imageWrapper, selected && style_movable.selectedImageWrapper]} {...panResponder.panHandlers}>
+          <Image source={buttonImage} style={style_movable.image} />
         </View>
       </TouchableHighlight>
     </View>
