@@ -39,5 +39,9 @@ export const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
     },
+    Moveable_selectedImageWrapper: {
+      borderColor: 'blue',
+      borderWidth: 2,
+    },
   });
   

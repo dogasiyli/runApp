@@ -1,7 +1,7 @@
-import { Image, TouchableHighlight, View } from 'react-native';
+import { Image, TouchableHighlight, View, PanResponder, Vibration } from 'react-native';
 import { Switch } from 'react-native-switch';  
 import { useAppState } from '../../assets/stateContext';
-import React from 'react';
+import React, { useContext, useRef, useState } from 'react';
 
 import { styles } from '../../sheets/styles';
 
@@ -20,7 +20,6 @@ interface MoveableImageProps {
   id:number;
   renderBool: boolean;
 }
-
 
 const toggle = (setFunction) => setFunction(previousState => !previousState);  
 //https://github.com/shahen94/react-native-switch
@@ -49,47 +48,66 @@ export const BT_toggleSavePosition: React.FC<ViewRCProps> = ({renderBool, trueSt
 };
 
 export const MoveableImage: React.FunctionComponent<MoveableImageProps> = ({id, renderBool}) => {
-    const { moveableImages, setMoveableImages } = useAppState();
-    //console.log('MoveableImage rendered');
-    if (!renderBool) {
-      return null;
-    }
-    const onPressButton = () => {
-      // Handle press logic
-    };
-  
-    const onLongPressButton = () => {
-      setMoveableImages((prevMoveableImages) => {
-        const updatedImages = prevMoveableImages.map((image, index) => {
-          if (index === id) {
-            return { ...image, selected: !image.selected };
-          } else if (image.selected) {
-            return { ...image, selected: false };
-          }
-          return image;
-        });
-        return updatedImages;
-      });
-    };
+  const { moveableImages, setMoveableImages } = useAppState();
 
-    const buttonImage = moveableImages[id].selected
-      ? button_images["moveable_selected"]
-      : button_images["moveable_default"];
+  if (!renderBool) {
+    return null;
+  }
 
-    return ( 
-      <View style={[styles.Moveable_button, 
-                      { left: moveableImages[id].positionX, 
-                        top: moveableImages[id].positionY}]}>
-        <TouchableHighlight
-        onPress={onPressButton}
-        onLongPress={onLongPressButton}
-        underlayColor={moveableImages[id].selected ? "rgba(255, 0, 0, 0.5)": "rgba(0, 255, 255, 0.5)"}
+  const image = moveableImages[id];
+  const [selected, setSelected] = useState(image.selected);
+  const [position, setPosition] = useState({ x: image.positionX, y: image.positionY });
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        setSelected(true);
+        Vibration.vibrate([0, 40, 20, 40]);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        const newPosition = {
+          x: image.positionX + gestureState.dx,
+          y: image.positionY + gestureState.dy,
+        };
+        setPosition(newPosition);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        Vibration.vibrate(300);
+        const newPosition = {
+          x: image.positionX + gestureState.dx,
+          y: image.positionY + gestureState.dy,
+        };
+        setSelected(false);
+        updatePositionInState(newPosition);
+      },
+      onPanResponderTerminate: () => {
+        setSelected(false);
+      },
+    })
+  ).current;
+
+  const updatePositionInState = (newPosition) => {
+    moveableImages[id].positionX = newPosition.x;
+    moveableImages[id].positionY = newPosition.y;
+    setMoveableImages(moveableImages);
+  };
+
+  const buttonImage = selected
+    ? button_images['moveable_selected']
+    : button_images['moveable_default'];
+
+  return (
+    <View style={[styles.Moveable_button, 
+                    {left: position.x, top: position.y }]} >
+      <TouchableHighlight
+        underlayColor={selected ? 'rgba(255, 0, 0, 0.5)' : 'rgba(0, 255, 255, 0.5)'}
         style={styles.Moveable_touchable}
       >
-          <View style={styles.Moveable_imageWrapper}>
-            <Image source={buttonImage} style={styles.Moveable_image} />
-          </View>
+        <View style={[styles.Moveable_imageWrapper, selected && styles.Moveable_selectedImageWrapper]} {...panResponder.panHandlers}>
+          <Image source={buttonImage} style={styles.Moveable_image} />
+        </View>
       </TouchableHighlight>
     </View>
-    );
+  );
 };

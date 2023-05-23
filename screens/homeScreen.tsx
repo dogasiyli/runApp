@@ -76,13 +76,6 @@ export function HomeScreen() {
   }, [current_location]);
 
 
-  useEffect(() => {
-    moveableImages.map((image, index) => (
-      console.log("useEffect : key(",index,"), image(", image ,")")
-    ))
-  }, []);
-
-
   // Check if the moveableImages array is still empty
   if (moveableImages.length === 0) {
     return (
