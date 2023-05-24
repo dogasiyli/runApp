@@ -17,3 +17,5 @@ web-build/
 .metro-health-check*
 *-checkpoint.ipynb
 *.ipynb_checkpoints*
+__pycache__/*
+*.pyc
