@@ -1,22 +1,25 @@
 import math
 from datetime import datetime
 
-def calc_pace_from_kmh(kmh):
+def calc_pace_from_kmh(kmh, verbose=False):
     # Calculate pace in minutes per kilometer
     pace = 60 / kmh
     # Convert pace to minutes and seconds
     minutes = int(pace)
     seconds = int((pace - minutes) * 60)
-    print("Pace:", minutes, "minutes", seconds, "seconds per kilometer")
+    if verbose:
+        print("Pace:", minutes, "minutes", seconds, "seconds per kilometer")
+    return pace
 
-
-def calc_run_params(dist_in_meters, time_in_seconds):
+def calc_run_params(dist_in_meters, time_in_seconds, verbose=False):
     # Calculate meters per second
     mps = dist_in_meters / time_in_seconds
     # Calculate kilometers per hour
     kmh = mps * 3.6
-    print("Kilometers per hour:", kmh)
-    calc_pace_from_kmh(kmh)
+    if verbose:
+        print("Kilometers per hour:", kmh)
+    pace = calc_pace_from_kmh(kmh, verbose=verbose)
+    return pace, kmh
 
 def deg_dms(direction_in_degrees):
     #https://www.calculatorsoup.com/calculators/conversions/convert-decimal-degrees-to-degrees-minutes-seconds.php
@@ -26,11 +29,14 @@ def deg_dms(direction_in_degrees):
     seconds = (minutes_decimal - minutes) * 60
     return f"{degrees} degrees {minutes} minutes {seconds:4.2f} seconds"
 
-def calc_geodesic(datapoint1, datapoint2):
+# https://www.movable-type.co.uk/scripts/latlong-vincenty.html
+# Distance/bearing between two points (inverse solution)
+def calc_geodesic(datapoint1, datapoint2, verbose=False):
     timestamp1 = datapoint1['timestamp']
     timestamp2 = datapoint2['timestamp']
     time_diff = (timestamp2 - timestamp1)/1000
-    print(f"Time Difference: {time_diff} seconds")
+    if verbose:
+        print(f"Time Difference: {time_diff} seconds")
     # Distance/bearing between two points (inverse solution)
     # @ https://www.movable-type.co.uk/scripts/latlong-vincenty.html
     φ1 = math.radians(datapoint1['coords']['latitude'])
@@ -43,7 +49,8 @@ def calc_geodesic(datapoint1, datapoint2):
     f = (a - b) / a  # Flattening factor
 
     L = λ2 - λ1 # U = reduced latitude, defined by tan U = (1-f)·tanφ.
-    print(f"L(difference in longitude)={L}")
+    if verbose:
+        print(f"L(difference in longitude)={L}")
     tanU1 = (1 - f) * math.tan(φ1)
     tanU2 = (1 - f) * math.tan(φ2)
     cosU1 = 1 / math.sqrt((1 + tanU1 * tanU1))
@@ -53,10 +60,12 @@ def calc_geodesic(datapoint1, datapoint2):
 
     # λ = difference in longitude on an auxiliary sphere
     λ, sinλ, cosλ = L, None, None
-    print(f"λ<init=L>(difference in longitude on an auxiliary sphere)={λ}")
+    if verbose:
+        print(f"λ<init=L>(difference in longitude on an auxiliary sphere)={λ}")
     # σ = angular distance P₁ P₂ on the sphere
     σ, sinσ, cosσ = None, None, None
-    print(f"σ(angular distance P₁ P₂ on the sphere)={σ}")
+    if verbose:
+        print(f"σ(angular distance P₁ P₂ on the sphere)={σ}")
     # σₘ = angular distance on the sphere from the equator to the midpoint of the line
     cos2σₘ = None
     # α = azimuth of the geodesic at the equator
@@ -86,28 +95,44 @@ def calc_geodesic(datapoint1, datapoint2):
 
     # s_geo_len = length of the geodesic
     s_geo_len = b * A * (σ - Δσ)
-    print(f"s_geo_len(length of the geodesic)={s_geo_len}")
+    if verbose:
+        print(f"s_geo_len(length of the geodesic)={s_geo_len}")
     # α1 =initial bearing
     α1 = math.atan2(cosU2 * sinλ, cosU1 * sinU2 - sinU1 * cosU2 * cosλ)  
-    print(f"α1(initial bearing)={α1} radians")
+    if verbose:
+        print(f"α1(initial bearing)={α1} radians")
     # α2 = final bearing
     α2 = math.atan2(cosU1 * sinλ, -sinU1 * cosU2 + cosU1 * sinU2 * cosλ)  
-    print(f"α2(final bearing)={α2} radians")
+    if verbose:
+        print(f"α2(final bearing)={α2} radians")
 
     α1 = math.degrees(α1)
     α2 = math.degrees(α2)
-    print(f"s(length of the geodesic)={s_geo_len:.3f} meters")
-    print(f"α1(initial bearing)={deg_dms(α1)}")
-    print(f"α2(final bearing)={deg_dms(α2)}")
+    if verbose:
+        print(f"s(length of the geodesic)={s_geo_len:.3f} meters")
+        print(f"α1(initial bearing)={deg_dms(α1)}")
+        print(f"α2(final bearing)={deg_dms(α2)}")
 
-    calc_run_params(s_geo_len, time_diff)
+    pace, kmh = calc_run_params(s_geo_len, time_diff)
 
     # s_geo_len is the geodesic distance along the surface of the ellipsoid (in the same units as a & b)
     # α1 is the initial bearing, or forward azimuth
     # α2 is the final bearing (in direction p1→p2)
-    return s_geo_len, α1, α2
 
-def calc_dif_geo(datapoint1, s_geo_len, α1, α2):
+    results = {
+        's_geo_len': s_geo_len,
+        'α1': α1,
+        'α2': α2,
+        'pace': pace,
+        'kmh': kmh
+    }
+    return results
+
+# https://www.movable-type.co.uk/scripts/latlong-vincenty.html
+# Destination given distance & bearing from start point (direct solution)
+def calc_dif_geo(datapoint1, geodesic_results):
+    s_geo_len, α1, α2 = geodesic_results['s_geo_len'],geodesic_results['α1'],geodesic_results['α2']
+
     φ1 = math.radians(datapoint1['coords']['latitude'])
     λ1 = math.radians(datapoint1['coords']['longitude'])
     a = 6378137.0  # Semi-major axis of the Earth
