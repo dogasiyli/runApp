@@ -59,10 +59,10 @@ export const BT_toggleLocationTrackingBG: React.FC<ViewRCProps> = ({renderBool, 
           onValueChange={() => toggle(set_location_background_started)}
           activeText={trueStr}
           inActiveText={falseStr}
-          backgroundInactive={'#00ff00'}
-          backgroundActive={'#ff0000'}
-          circleInActiveColor={'#00ffff'}
-          circleActiveColor={'#ff00ff'}
+          backgroundInactive={'#0000ff'}
+          backgroundActive={'#ff5500'}
+          circleInActiveColor={'#0055ff'}
+          circleActiveColor={'#ff3399'}
           changeValueImmediately={true}
           switchWidthMultiplier={2}
    />  
