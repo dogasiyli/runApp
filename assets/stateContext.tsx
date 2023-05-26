@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { INIT_PERMITS, INIT_POSITION } from '../assets/constants';
 
 export interface MoveableImageDict
@@ -16,6 +16,9 @@ interface StateContextType {
 
     bool_record_locations:boolean;
     enable_record_locations: React.Dispatch<React.SetStateAction<boolean>>;
+
+    bool_location_background_started:boolean;
+    set_location_background_started: React.Dispatch<React.SetStateAction<boolean>>;
 
     arr_location_history:Array<object>;
     set_location_history: React.Dispatch<React.SetStateAction<Array<object>>>;
@@ -37,6 +40,7 @@ export const useAppState = () => {
 interface Props {children: React.ReactNode;}
 export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [permits, set_permits] = useState(INIT_PERMITS);
+    const [bool_location_background_started, set_location_background_started] = useState(false);
     const [current_location, set_current_location] = useState(INIT_POSITION);
     const [bool_record_locations, enable_record_locations] = useState(false);
     const [arr_location_history, set_location_history] = useState(new Array(INIT_POSITION));
@@ -49,6 +53,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
   return (
     <StateContext.Provider
       value={{  permits, set_permits, 
+                bool_location_background_started, set_location_background_started,
                 current_location, set_current_location, 
                 bool_record_locations, enable_record_locations, 
                 arr_location_history, set_location_history,

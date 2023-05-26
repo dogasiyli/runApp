@@ -46,6 +46,30 @@ export const BT_toggleSavePosition: React.FC<ViewRCProps> = ({renderBool, trueSt
   </View>
   );
 };
+export const BT_toggleLocationTrackingBG: React.FC<ViewRCProps> = ({renderBool, trueStr, falseStr}) => {
+  const { bool_location_background_started, set_location_background_started } = useAppState();
+  if (!renderBool) {
+    return null;
+  }
+  return (
+   <View style={{flex:1, position: "absolute", marginTop:"20%", justifyContent: 'center', alignItems: 'center'}}>
+    <Switch 
+          value={bool_location_background_started}
+          disabled={false}
+          onValueChange={() => toggle(set_location_background_started)}
+          activeText={trueStr}
+          inActiveText={falseStr}
+          backgroundInactive={'#00ff00'}
+          backgroundActive={'#ff0000'}
+          circleInActiveColor={'#00ffff'}
+          circleActiveColor={'#ff00ff'}
+          changeValueImmediately={true}
+          switchWidthMultiplier={2}
+   />  
+  </View>
+  );
+};
+
 
 export const MoveableImage: React.FunctionComponent<MoveableImageProps> = ({id, renderBool}) => {
   const { moveableImages, setMoveableImages } = useAppState();

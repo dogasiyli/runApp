@@ -1,3 +1,5 @@
+import { LocationObject } from "expo-location";
+
 export const INIT_POSITION = {
     "coords": 
     {
@@ -20,3 +22,7 @@ export const INIT_PERMITS = {
 export const INIT_TIMES = {
     "gpsUpdateMS": 500,
 }
+
+export type OfflineLocationData = {locations: LocationObject[];};
+export const LOCATION_TRACKING = 'location-tracking';
+export const LOCATION_TRACKING_BACKGROUND = 'location-tracking';
