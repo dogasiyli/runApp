@@ -9,7 +9,7 @@ import { INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND, OfflineLoc
 
 
 import { showGPSResults } from '../functions/display/showText';
-import { BT_toggleSavePosition, BT_toggleLocationTrackingBG } from '../functions/display/buttons';
+import { BT_Circle_Text_GPS, Circle_Text_Error, DisplayData } from '../functions/display/buttons';
 import { saveToFile, getFormattedDateTime } from '../asyncOperations/fileOperations';
 import { style_container } from '../sheets/styles';
 
@@ -27,7 +27,8 @@ export function Screen_GPS_Debug({route}) {
   const { permits, set_permits, 
           bool_location_background_started, set_location_background_started,
           current_location, set_current_location, 
-          bool_record_locations, arr_location_history
+          bool_record_locations, arr_location_history,
+          bool_update_locations, enable_update_locations,
         } = useAppState();
   const someText = route.params.someText;
 
@@ -101,41 +102,71 @@ export function Screen_GPS_Debug({route}) {
         }
       }
     }
-    if (bool_record_locations)
+    // if recording is enabled but updating is not, then enable updating
+    if (bool_record_locations && !bool_update_locations)
+    {
+      enable_update_locations(true);
+    }
+    // if either recording or updating is enabled, then update GPS
+    if (bool_update_locations || bool_record_locations)
     {
         const interval = setInterval(() => {
           updateGPS();
           }, INIT_TIMES.gpsUpdateMS);
         return () => clearInterval(interval);    
     }
-  }, [bool_record_locations]);
+  }, [bool_record_locations, bool_update_locations]);
 
   // useEffect appending updated location to arr_location_history
   useEffect(() => {
     //console.log("current_location:",current_location)
     const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
-    if (current_location["timestamp"] !== lastTimestamp) {
+    
+    // if recording is enabled and timestamp is different from last timestamp, then append to arr_location_history
+    if (current_location["timestamp"] !== lastTimestamp && bool_record_locations) {
       arr_location_history.push(current_location);
       if (arr_location_history.length%2==0)
       {
           setscreenText("Num of locations:"+arr_location_history.length);
       }
     }
+    // deal with current_location["accuracy"] info here
+
+
   }, [current_location]);
 
   return (
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top }}>
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
       <StatusBar style="auto" />
-      <BT_toggleSavePosition falseStr='Start' trueStr='Stop' renderBool={true}/>
-      <BT_toggleLocationTrackingBG falseStr='StartLoc' trueStr='StopLoc' renderBool={true}/>
+      <BT_Circle_Text_GPS renderBool={true} top="8%" left="4%"/>
+      <Circle_Text_Error renderBool={true} 
+                         dispVal={current_location["coords"]["accuracy"]} 
+                         floatVal={current_location["coords"]["accuracy"]}
+                         tresholds={[7, 12, 19]} top="5%" left="25%"
+                         afterText='mt'beforeText='e:'/>
+      <Circle_Text_Error renderBool={true} 
+                         dispVal={current_location["coords"]["latitude"]} 
+                         floatVal={current_location["coords"]["accuracy"]}
+                         tresholds={[7, 12, 19]} top="30%" left="0%"
+                         beforeText='Lat:' afterText=''/>
+      <Circle_Text_Error renderBool={true} 
+                         dispVal={current_location["coords"]["longitude"]} 
+                         floatVal={current_location["coords"]["accuracy"]}
+                         tresholds={[7, 12, 19]} top="30%" left="25%"
+                         beforeText='Lon:' afterText=''/>
+      <Circle_Text_Error renderBool={true} 
+                         dispVal={current_location["coords"]["altitude"]} 
+                         floatVal={current_location["coords"]["altitudeAccuracy"]}
+                         tresholds={[1, 3, 5]} top="30%" left="50%"
+                         beforeText='Alt:' afterText=''/>
+      <DisplayData renderBool={true} top="30%" left="75%" current_location={current_location}/>
       <View style={{alignSelf:"center", alignItems:"center", alignContent:"center", marginTop: '50%', width: '100%'}}>
-          {showGPSResults(current_location)}
+          {showGPSResults(current_location, false)}
           <View>
             <Text>{screenText}</Text>
           </View>
       </View>
       <View style={style_container.container}>
-        <Text>{someText}</Text>
         <Button disabled={!permits["mediaLibrary"] && (bool_record_locations || arr_location_history.length<=1)} onPress={() => saveToFile(arr_location_history)} title="RecordPositions" color = {this.disabled ? "#ff0000" : "#00ffff"} />
       </View>
     </View>

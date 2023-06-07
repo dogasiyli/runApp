@@ -25,7 +25,10 @@ const getReadableTime = (timeStamp:number) : string => {
     return formatted;
 };
 
-export function showGPSResults(location:object) {
+export function showGPSResults(location:object, renderBool:boolean) {
+  if (!renderBool) {
+    return null;
+  }
     return (
       <View>
         <Text>Coords at : {getReadableTime(location["timestamp"])}</Text>
