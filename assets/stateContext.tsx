@@ -28,6 +28,18 @@ interface StateContextType {
 
     moveableImages:Array<MoveableImageDict>;
     setMoveableImages: React.Dispatch<React.SetStateAction<Array<MoveableImageDict>>>;
+
+    initTimestamp: number;
+    setInitTimestamp: React.Dispatch<React.SetStateAction<number>>;
+    lastTimestamp: number;
+    setLastTimestamp: React.Dispatch<React.SetStateAction<number>>;
+
+    activeTime: number;
+    setActiveTime: React.Dispatch<React.SetStateAction<number>>;
+    passiveTime: number;
+    setPassiveTime: React.Dispatch<React.SetStateAction<number>>;
+    totalTime: number;
+    setTotalTime: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const StateContext = createContext<StateContextType | undefined>(undefined);
@@ -49,6 +61,13 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [bool_record_locations, enable_record_locations] = useState(false);
     const [arr_location_history, set_location_history] = useState(new Array(INIT_POSITION));
 
+    const [initTimestamp, setInitTimestamp] = useState(null);
+    const [lastTimestamp, setLastTimestamp] = useState(null);
+
+    const [activeTime, setActiveTime] = useState(0);
+    const [passiveTime, setPassiveTime] = useState(0);
+    const [totalTime, setTotalTime] = useState(0);
+
     var [moveableImages, setMoveableImages] = useState([
       {positionX: 75,positionY: 250,selected: false,},
       {positionX: 275,positionY: 250,selected: false,},
@@ -63,6 +82,13 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 bool_update_locations, enable_update_locations,
                 arr_location_history, set_location_history,
                 moveableImages, setMoveableImages,
+
+                initTimestamp, setInitTimestamp,
+                lastTimestamp, setLastTimestamp,
+
+                activeTime, setActiveTime,
+                passiveTime, setPassiveTime,
+                totalTime, setTotalTime,
             }}
     >
       {children}

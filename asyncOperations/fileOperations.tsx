@@ -1,20 +1,42 @@
 import * as FileSystem from 'expo-file-system';
 const { StorageAccessFramework } = FileSystem;
 
-export const getFormattedDateTime = ():string => {
-    const date = new Date();
+export const getFormattedDateTime = (disp_type?: string): string => {
+  const date = new Date();
 
-    // Format date and time in the format: yyyyMMdd_hhmmss
+  if (disp_type === 'dateclock') {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = monthNames[date.getMonth()];
+    const day = date.getDate();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}${month} ${hours}:${minutes}`;
+  } else {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
-  
-    const formattedDateTime = `${year}${month}${day}_${hours}${minutes}${seconds}`;
-    return   formattedDateTime
-}
+
+    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+  }
+};
+
+export const getReadableDuration = (duration:number) => {
+  const seconds = Math.floor(duration / 1000) % 60;
+  const minutes = Math.floor(duration / 1000 / 60) % 60;
+  const hours = Math.floor(duration / 1000 / 60 / 60);
+
+  const hoursStr = hours > 0 ? `${hours}h` : '';
+  const minutesStr = minutes > 0 ? (hours > 0 ? `${String(minutes).padStart(2, '0')}'` : `${minutes}'`) : '';
+  const secondsStr = (hours > 0 || minutes > 0) ? `${String(seconds).padStart(2, '0')}''` : `${seconds}''`;
+
+  return hoursStr + minutesStr + secondsStr;
+};
+
+
 const saveToMediaLibrary = async (fileUri:string, parentUri:string, filename:string) => {
     // try {
     // const asset = await MediaLibrary.createAssetAsync(fileUri);

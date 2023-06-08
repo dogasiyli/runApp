@@ -19,3 +19,4 @@ web-build/
 *.ipynb_checkpoints*
 __pycache__/*
 *.pyc
+application*.aab

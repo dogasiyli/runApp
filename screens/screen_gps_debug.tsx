@@ -10,7 +10,7 @@ import { INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND, OfflineLoc
 
 import { showGPSResults } from '../functions/display/showText';
 import { BT_Circle_Text_GPS, Circle_Text_Error, DisplayData } from '../functions/display/buttons';
-import { saveToFile, getFormattedDateTime } from '../asyncOperations/fileOperations';
+import { saveToFile, getFormattedDateTime, getReadableDuration } from '../asyncOperations/fileOperations';
 import { style_container } from '../sheets/styles';
 
 import { useAppState } from '../assets/stateContext';
@@ -19,6 +19,7 @@ import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../asyncOperations/requests';
 import { on_new_gps_data } from '../asyncOperations/gpsOperations';
+import { handleTimerInterval } from '../asyncOperations/utils';
 
 
 export function Screen_GPS_Debug({route}) {
@@ -29,6 +30,12 @@ export function Screen_GPS_Debug({route}) {
           current_location, set_current_location, 
           bool_record_locations, arr_location_history,
           bool_update_locations, enable_update_locations,
+
+          initTimestamp, setInitTimestamp,
+          lastTimestamp, setLastTimestamp,
+          activeTime, setActiveTime,
+          passiveTime, setPassiveTime,
+          totalTime, setTotalTime,
         } = useAppState();
   const someText = route.params.someText;
 
@@ -117,6 +124,26 @@ export function Screen_GPS_Debug({route}) {
     }
   }, [bool_record_locations, bool_update_locations]);
 
+  useEffect(() => {
+    const handleInterval = setInterval(async () => {
+      await handleTimerInterval(
+        bool_record_locations,
+        initTimestamp,
+        lastTimestamp,
+        setActiveTime,
+        setPassiveTime,
+        setTotalTime,
+        setLastTimestamp,
+        setInitTimestamp
+      );
+    }, 1000);
+  
+    return () => {
+      clearInterval(handleInterval);
+    };
+  }, [bool_record_locations, initTimestamp, lastTimestamp]);
+  
+
   // useEffect appending updated location to arr_location_history
   useEffect(() => {
     //console.log("current_location:",current_location)
@@ -139,11 +166,20 @@ export function Screen_GPS_Debug({route}) {
     <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
       <StatusBar style="auto" />
       <BT_Circle_Text_GPS renderBool={true} top="8%" left="4%"/>
+
+      {/*meter error*/}
       <Circle_Text_Error renderBool={true} 
                          dispVal={current_location["coords"]["accuracy"]} 
                          floatVal={current_location["coords"]["accuracy"]}
                          tresholds={[7, 12, 19]} top="5%" left="25%"
                          afterText='mt'beforeText='e:'/>
+      {/*current time*/}
+      <Circle_Text_Error renderBool={true} 
+                         dispVal={getFormattedDateTime("dateclock")}
+                         floatVal={-1}
+                         tresholds={[2, 4, 6]} top="5%" left="75%"
+                         afterText='' beforeText=''/>
+                         
       <Circle_Text_Error renderBool={true} 
                          dispVal={current_location["coords"]["latitude"]} 
                          floatVal={current_location["coords"]["accuracy"]}
@@ -160,7 +196,29 @@ export function Screen_GPS_Debug({route}) {
                          tresholds={[1, 3, 5]} top="30%" left="50%"
                          beforeText='Alt:' afterText=''/>
       <DisplayData renderBool={true} top="30%" left="75%" current_location={current_location}/>
-      <View style={{alignSelf:"center", alignItems:"center", alignContent:"center", marginTop: '50%', width: '100%'}}>
+
+      {/*total time*/}
+      <Circle_Text_Error renderBool={true} 
+                         dispVal={getReadableDuration(totalTime)}
+                         floatVal={-1}
+                         tresholds={[2, 4, 6]} top="60%" left="0%"
+                         afterText='' beforeText='Tot'/>
+      {/*active time*/}
+      <Circle_Text_Error renderBool={true}
+                          dispVal={getReadableDuration(activeTime)}
+                          floatVal={-1}
+                          tresholds={[2, 4, 6]} top="60%" left="25%"
+                          afterText='' beforeText='Act'/>
+      {/*passive time*/}
+      <Circle_Text_Error renderBool={true}
+                          dispVal={getReadableDuration(passiveTime)}
+                          floatVal={-1}
+                          tresholds={[2, 4, 6]} top="60%" left="50%"
+                          afterText='' beforeText='Pas'/>
+
+
+
+      <View style={{alignSelf:"center", alignItems:"center", alignContent:"center", marginTop: '80%', width: '100%'}}>
           {showGPSResults(current_location, false)}
           <View>
             <Text>{screenText}</Text>

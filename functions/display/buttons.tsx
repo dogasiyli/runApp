@@ -161,18 +161,24 @@ export const Circle_Text_Error: React.FC<CircleTextErrorProps> = ({ renderBool, 
   const G = Math.round(Math.max(0, Math.min(255, floatVal < T[1] ? 255 : floatVal <= T[2] ? (T[2] - floatVal) * (255 / (T[2] - T[1])) : 0)));
   const B = Math.round(Math.max(0, Math.min(255, floatVal < T[0] ? 255 : floatVal <= T[1] ? (T[1] - floatVal) * (255 / (T[1] - T[0])) : 0)));
 
-  const backgroundColor = `rgb(${R}, ${G}, ${B})`;
+  const backgroundColor = floatVal < 0 ? `rgb(200,200,200)` :`rgb(${R}, ${G}, ${B})`;
 
   return (
-    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
       <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
         <Text
           disabled={false}
-          style={{ backgroundColor:backgroundColor, width: circleSize, height: circleSize, textAlign: 'center', lineHeight: circleSize, borderRadius: circleSize / 2 }}
+          style={{ backgroundColor:backgroundColor, width: circleSize, height: circleSize, textAlign: 'center', 
+                   lineHeight: circleSize, borderRadius: circleSize / 2,
+                   top:0, marginBottom:10}}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
-         {beforeText} {typeof dispVal === 'number' ? dispVal.toFixed(3) : dispVal} {afterText}
+             {beforeText} {typeof dispVal === 'string' ? dispVal : ''} 
+        </Text>
+        <Text style={{bottom:circleSize/2, textAlign: 'center'} }>
+          {typeof dispVal === 'number' ? dispVal.toFixed(3) : ''} 
+          {afterText}
         </Text>
       </View>
     </View>
