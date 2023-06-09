@@ -239,7 +239,7 @@ export const get_last_dist = (arr_location_history: any[], n: number, verbose: b
     };
   }
 
-  console.log("lastIndex:", lastIndex, "startIndex:", startIndex);
+  //console.log("lastIndex:", lastIndex, "startIndex:", startIndex);
   const p1 = arr_location_history[startIndex];
   const p2 = arr_location_history[lastIndex];
 

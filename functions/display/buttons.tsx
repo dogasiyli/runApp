@@ -31,8 +31,8 @@ const run_image_ident = {
   "run04": "run_fast",
   "run05": "cycling",
 }
-//const run_tresholds = [1, 4, 8, 14, 25]; // Thresholds array
-const run_tresholds = [1, 2, 3, 4, 5]; // Thresholds array
+const run_tresholds = [1, 4, 8, 12, 15]; // Thresholds array
+//const run_tresholds = [1, 2, 3, 4, 5]; // Thresholds array
 const run_colors = ["#404080", "#0000ff", "#44aa00", "#ff8800", "#880000"]; // Colors array
 const minPace = run_tresholds[0];
 const maxPace = run_tresholds[run_tresholds.length - 1];
