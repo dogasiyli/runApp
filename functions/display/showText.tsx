@@ -24,22 +24,3 @@ const getReadableTime = (timeStamp:number) : string => {
         + ' ' + newformat;
     return formatted;
 };
-
-export function showGPSResults(location:object, renderBool:boolean) {
-  if (!renderBool) {
-    return null;
-  }
-    return (
-      <View>
-        <Text>Coords at : {getReadableTime(location["timestamp"])}</Text>
-        <Text>accuracy: {location["coords"]["accuracy"]} </Text>
-        <Text>altitude: {location["coords"]["altitude"]} </Text>
-        <Text>altitudeAccuracy: {location["coords"]["altitudeAccuracy"]} </Text>
-        <Text>heading: {location["coords"]["heading"]} </Text>
-        <Text>Latitude: {location["coords"]["latitude"]}</Text>
-        <Text>Longitude: {location["coords"]["longitude"]}</Text>
-        <Text>speed: {location["coords"]["speed"]}</Text>
-        <Text>mocked: {location["mocked"] ? "Yes": "No"}</Text>
-      </View>
-    );
-  }

@@ -20,7 +20,8 @@ export const INIT_PERMITS = {
     "mediaLibrary": false,
 }
 export const INIT_TIMES = {
-    "gpsUpdateMS": 500,
+    "gpsUpdateMS": 1000,
+    "timerUpdateMS": 1000,
 }
 
 export type OfflineLocationData = {locations: LocationObject[];};

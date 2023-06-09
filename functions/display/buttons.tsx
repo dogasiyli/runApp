@@ -5,45 +5,65 @@ import React, { useContext, useRef, useState } from 'react';
 import Slider from '@react-native-community/slider';
 
 import { style_movable } from '../../sheets/styles';
+import { format_time_diff } from '../../asyncOperations/utils';
+
+import { ViewRCProps, CircleTextErrorProps, CircleTextColorProps, CircleTextGPSProps, 
+         CircleImagePaceProps, DisplayDataProps, MoveableImageProps } from '../../assets/interface_definitions';
 
 const button_images = {
   "moveable_default": require('../../assets/pngs/defaultMoveable.png'),
   "moveable_selected": require('../../assets/pngs/selectedMoveable.png'),
 }
 
-interface ViewRCProps {
-    trueStr:string;
-    falseStr:string;
-    renderBool: boolean;
+const run_images = {
+  "standing": require('../../assets/pngs/standing.png'),
+  "walk": require('../../assets/pngs/walk.png'),
+  "jog": require('../../assets/pngs/jog.png'),
+  "run_slow": require('../../assets/pngs/run_slow.png'),
+  "run_fast": require('../../assets/pngs/run_fast.png'),
+  "cycling": require('../../assets/pngs/cycling.png'),
+}
+const run_image_ident = {
+  "run00": "standing",
+  "run01": "walk",
+  "run02": "jog",
+  "run03": "run_slow",
+  "run04": "run_fast",
+  "run05": "cycling",
+}
+//const run_tresholds = [1, 4, 8, 14, 25]; // Thresholds array
+const run_tresholds = [1, 2, 3, 4, 5]; // Thresholds array
+const run_colors = ["#404080", "#0000ff", "#44aa00", "#ff8800", "#880000"]; // Colors array
+const minPace = run_tresholds[0];
+const maxPace = run_tresholds[run_tresholds.length - 1];
+
+const calculatePaceRGB = (pace: number) => {
+  const normalizedPace = Math.max(minPace, Math.min(maxPace, pace));
+  const index1 = Math.min(Math.floor((normalizedPace - minPace) / (maxPace - minPace) * (run_colors.length - 1)), run_colors.length - 1);
+  const index2 = Math.min(index1 + 1, run_colors.length - 1);
+  const color1 = run_colors[index1];
+  const color2 = run_colors[index2];
+  const percentage = (normalizedPace - run_tresholds[index1]) / (run_tresholds[index2] - run_tresholds[index1]);
+  
+  const R = Math.round(parseInt(color1.slice(1, 3), 16) * (1 - percentage) + parseInt(color2.slice(1, 3), 16) * percentage);
+  const G = Math.round(parseInt(color1.slice(3, 5), 16) * (1 - percentage) + parseInt(color2.slice(3, 5), 16) * percentage);
+  const B = Math.round(parseInt(color1.slice(5, 7), 16) * (1 - percentage) + parseInt(color2.slice(5, 7), 16) * percentage);
+
+  return `rgb(${R}, ${G}, ${B})`;
+};
+
+const selectRunImage = (pace: number) => {
+  let imageName = 'run05'; // Highest pace
+  for (let i = 0; i < run_tresholds.length; i++) {
+    if (pace < run_tresholds[i]) {
+      imageName = `run0${i}`;
+      break;
+    }
   }
 
-interface CircleTextGPSProps {
-  renderBool: boolean;
-  top:string;
-  left:string;
-}
+  return run_images[run_image_ident[imageName]];
+};
 
-interface DisplayDataProps {
-  renderBool: boolean;
-  current_location: object;
-  top:string;
-  left:string;
-}
-
-interface CircleTextErrorProps {
-  renderBool: boolean;
-  dispVal: number | string;
-  beforeText: string;
-  afterText: string;
-  floatVal: number;
-  tresholds: Array<number>;
-  top:string;
-  left:string;
-}
-interface MoveableImageProps {
-  id:number;
-  renderBool: boolean;
-}
 
 const toggle = (setFunction) => setFunction(previousState => !previousState);  
 //https://github.com/shahen94/react-native-switch
@@ -185,48 +205,53 @@ export const Circle_Text_Error: React.FC<CircleTextErrorProps> = ({ renderBool, 
   );
 };
 
-interface TimestampInfo {
-  formattedTimestamp: string;
-  diffInSeconds: number;
-}
-const formatTimestamp = (timestamp: number): TimestampInfo => {
-  const now = Date.now();
-  const diffInSeconds = Math.floor((now - timestamp) / 1000);
-
-  let formattedTimestamp = '';
-  if (diffInSeconds < 1) {
-    formattedTimestamp = `Smooth`;
-  }
-  else if (diffInSeconds < 60) {
-    formattedTimestamp = `${diffInSeconds} sec`;
-  } else {
-    formattedTimestamp = '>1 min';
-  }
-
-  return {
-    formattedTimestamp,
-    diffInSeconds,
-  };
-};
-
-export const DisplayData: React.FC<DisplayDataProps> = ({ renderBool, top, left, current_location }) => {
+export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({ renderBool, dispVal, beforeText='', afterText='', floatVal, top, left, backgroundColor }) => {
   if (!renderBool) {
     return null;
   }
 
-  const timestamp = current_location["timestamp"];
-  const { latitude, longitude, altitude } = current_location["coords"];
-  const {formattedTimestamp, diffInSeconds} = formatTimestamp(timestamp);
+  const { width } = Dimensions.get('window');
+  const circleSize = width * 0.22; // Adjust the percentage as needed
+
+  //const backgroundColor = floatVal < 0 ? `rgb(200,200,200)` :`rgb(${R}, ${G}, ${B})`;
 
   return (
+    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+      <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
+        <Text
+          disabled={false}
+          style={{ backgroundColor:backgroundColor, width: circleSize, height: circleSize, textAlign: 'center', 
+                   lineHeight: circleSize, borderRadius: circleSize / 2,
+                   top:0, marginBottom:10}}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+             {beforeText} {typeof dispVal === 'string' ? dispVal : ''} 
+        </Text>
+        <Text style={{bottom:circleSize/2, textAlign: 'center'} }>
+          {typeof dispVal === 'number' ? dispVal.toFixed(3) : ''} 
+          {afterText}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+export const DataAgeInSec: React.FC<DisplayDataProps> = ({ renderBool, top, left, current_location }) => {
+  if (!renderBool) {
+    return null;
+  }
+  const timestamp = current_location["timestamp"];
+  const {Formatted_Time_Diff: formattedTimestamp, Diff_In_Seconds: diffInSeconds} = format_time_diff(Date.now()-timestamp);
+  return (
+
     <Circle_Text_Error renderBool={true} 
     dispVal={formattedTimestamp} 
     floatVal={diffInSeconds}
     tresholds={[3, 5, 10]} top={top} left={left}
-    beforeText='' afterText=''/>
+    beforeText='' afterText='DataAge'/>
   );
 };
-
 
 export const MoveableImage: React.FunctionComponent<MoveableImageProps> = ({id, renderBool}) => {
   const { moveableImages, setMoveableImages } = useAppState();
@@ -288,6 +313,58 @@ export const MoveableImage: React.FunctionComponent<MoveableImageProps> = ({id, 
           <Image source={buttonImage} style={style_movable.image} />
         </View>
       </TouchableHighlight>
+    </View>
+  );
+};
+
+export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
+  renderBool,
+  speed_kmh,
+  beforeText = '',
+  afterText = '',
+  top,
+  left,
+}) => {
+  if (!renderBool) {
+    return null;
+  }
+
+  const { width } = Dimensions.get('window');
+  const circleSize = width * 0.22; // Adjust the percentage as needed
+
+  const backgroundColor = calculatePaceRGB(speed_kmh);
+  const imageSource = selectRunImage(speed_kmh);
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        position: 'absolute',
+        marginTop: top,
+        left: left,
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+      }}
+    >
+      <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
+        <Image
+          source={imageSource}
+          style={{
+            backgroundColor: backgroundColor,
+            width: circleSize,
+            height: circleSize,
+            borderRadius: circleSize / 2,
+            top: 0,
+            marginBottom: 10,
+          }}
+        />
+        <Text style={{ bottom: circleSize / 8, textAlign: 'center' }}>
+          {speed_kmh.toFixed(1)}kmh
+        </Text>        
+        <Text style={{ bottom: circleSize / 8, textAlign: 'center' }}>
+          {afterText}
+        </Text>
+      </View>
     </View>
   );
 };
