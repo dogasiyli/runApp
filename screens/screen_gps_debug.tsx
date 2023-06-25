@@ -19,19 +19,23 @@ import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../asyncOperations/requests';
 import { on_new_gps_data } from '../asyncOperations/gpsOperations';
-import { handleTimerInterval, get_last_dist, format_degree_to_string } from '../asyncOperations/utils';
+import { handleTimerInterval, get_dist_time, format_degree_to_string } from '../asyncOperations/utils';
 
 import { SpeedTimeInfo } from '../assets/interface_definitions';
+import { update_pos_array } from '../asyncOperations/utils';
 
 
 export function Screen_GPS_Debug({route}) {
+  const row_tops = ["5%", "30%", "70%", "120%", "90%"];
   const insets = useSafeAreaInsets();
   const [screenText, setscreenText] = useState("No locations yet");
-  const [sp_tim_inf, setSpeedTimeInfo] = useState<SpeedTimeInfo>({ s60: 0,s30: 0,s10: 0,t60: 0,t30: 0,t10: 0,});
+  const [sp_tim_inf_1, setSpeedTimeInfo_1] = useState<SpeedTimeInfo>({ s60: 0,s30: 0,s10: 0,t60: 0,t30: 0,t10: 0,});
+  const [sp_tim_inf_2, setSpeedTimeInfo_2] = useState<SpeedTimeInfo>({ s60: 0,s30: 0,s10: 0,t60: 0,t30: 0,t10: 0,});
   const { permits, set_permits, 
           bool_location_background_started, set_location_background_started,
           current_location, set_current_location, 
-          bool_record_locations, arr_location_history,
+          bool_record_locations, arr_location_history, 
+          position_dict, set_position_dict,
           bool_update_locations, enable_update_locations,
 
           initTimestamp, setInitTimestamp,
@@ -43,8 +47,8 @@ export function Screen_GPS_Debug({route}) {
   const prevBoolRecordLocations = useRef(bool_record_locations);
   const prevBoolUpdateLocations = useRef(bool_update_locations);      
 
-  const someText = route.params.someText;
-  
+  // Debug Screen, SpeedScreens
+  const display_page_mode = route.params?.display_page_mode || '';  
 
   // useEffect for define task LOCATION_TRACKING_BACKGROUND
   // not being used for now
@@ -175,117 +179,196 @@ export function Screen_GPS_Debug({route}) {
 
   // useEffect appending updated location to arr_location_history
   useEffect(() => {
-    //console.log("current_location:",current_location)
-    const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
-    // if recording is enabled and timestamp is different from last timestamp, then append to arr_location_history
-    if (current_location["timestamp"] !== lastTimestamp && bool_record_locations) {
-      arr_location_history.push(current_location);
-    }
+    const updateLocationHistory = async () => {
+      const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
+      if (current_location["timestamp"] !== lastTimestamp && bool_record_locations) {
+        arr_location_history.push(current_location);
+        await update_pos_array(arr_location_history, position_dict, set_position_dict);      
+      }
+    };
+    updateLocationHistory();
   }, [current_location]);
+  
 
   // useEffect calculations from arr_location_history
   useEffect(() => {
-        // Define an inner async function and call it immediately
-        (async () => {
-          const x60 = await get_last_dist(arr_location_history, 60, false);
-          const x30 = await get_last_dist(arr_location_history, 30, false);
-          const x10 = await get_last_dist(arr_location_history, 5, false);
-          setSpeedTimeInfo({
-            s60: x60.kmh,
-            t60: x60.time_diff,
-            s30: x30.kmh,
-            t30: x30.time_diff,
-            s10: x10.kmh,
-            t10: x10.time_diff,
-          });
-        })();
-    }, [current_location]);
-
-  return (
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
-      <StatusBar style="auto" />
-
-      {/*--------ROW 1----------*/}
-      <BT_Circle_Text_GPS renderBool={true} top="8%" left="4%"/>
-
-      {/*meter error*/}
-      <Circle_Text_Error renderBool={true} 
-                         dispVal={current_location["coords"]["accuracy"].toFixed(3)} 
-                         floatVal={current_location["coords"]["accuracy"]}
-                         tresholds={[7, 12, 19]} top="5%" left="25%"
-                         afterText='Error(mt)'beforeText=''/>
-      {/*current time*/}
-      <Circle_Text_Error renderBool={true} 
-                         dispVal={getFormattedDateTime("dateclock")}
-                         floatVal={-1}
-                         tresholds={[2, 4, 6]} top="5%" left="75%"
-                         afterText='' beforeText=''/>
-                         
-
-      {/*--------ROW 2----------*/}
-      {/*latitude, longitude, altitude*/}
-      <Circle_Text_Error renderBool={true} 
-                         dispVal={format_degree_to_string(current_location["coords"]["latitude"])} 
-                         floatVal={current_location["coords"]["accuracy"]}
-                         tresholds={[7, 12, 19]} top="30%" left="0%"
-                         beforeText='' afterText='Latitude'/>
-      <Circle_Text_Error renderBool={true} 
-                         dispVal={format_degree_to_string(current_location["coords"]["longitude"])} 
-                         floatVal={current_location["coords"]["accuracy"]}
-                         tresholds={[7, 12, 19]} top="30%" left="25%"
-                         beforeText='' afterText='Longtitude'/>
-      <Circle_Text_Error renderBool={true} 
-                         dispVal={format_degree_to_string(current_location["coords"]["altitude"])} 
-                         floatVal={current_location["coords"]["altitudeAccuracy"]}
-                         tresholds={[1, 3, 5]} top="30%" left="50%"
-                         beforeText='' afterText='Altitude'/>
-      {/*last data acquisition*/}
-      <DataAgeInSec renderBool={true} top="30%" left="75%" current_location={current_location}/>
-
-      {/*--------ROW 3----------*/}
-      {/*total time*/}
-      <Circle_Text_Color renderBool={true} 
-                         dispVal={getReadableDuration(totalTime)}
-                         floatVal={-1}
-                         backgroundColor="rgb(200,200,200)" top="60%" left="0%"
-                         afterText='Total' beforeText=''/>
-      {/*active time*/}
-      <Circle_Text_Color renderBool={true}
-                          dispVal={getReadableDuration(activeTime)}
-                          floatVal={-1}
-                          backgroundColor="rgb(0,100,0)" top="60%" left="25%"
-                          afterText='Active' beforeText=''/>
-      {/*passive time*/}
-      <Circle_Text_Color renderBool={true}
-                          dispVal={getReadableDuration(passiveTime)}
-                          floatVal={-1}
-                          backgroundColor="#505050" top="60%" left="50%"
-                          afterText='Passive' beforeText=''/>
+    // Define an inner async function and call it immediately
+    (async () => {
+      if (display_page_mode === 'SpeedScreens' || display_page_mode === 'Debug Screen') {
+        const x60s = await get_dist_time(position_dict, 40, "seconds", false)
+        const x30s = await get_dist_time(position_dict, 20, "seconds", false);
+        const x10s = await get_dist_time(position_dict, 5, "seconds", false);
+        setSpeedTimeInfo_1({
+          s60: x60s.kmh,
+          t60: x60s.time_diff,
+          s30: x30s.kmh,
+          t30: x30s.time_diff,
+          s10: x10s.kmh,
+          t10: x10s.time_diff,
+        });
+      }
+      if (display_page_mode === 'SpeedScreens') {
+        const x1km = await get_dist_time(position_dict, 100, "meters", false)
+        const x500m = await get_dist_time(position_dict, 50, "meters", false);
+        const x100m = await get_dist_time(position_dict, 10, "meters", false);
+        setSpeedTimeInfo_2({
+          s60: x1km.kmh,
+          t60: x1km.time_diff,
+          s30: x500m.kmh,
+          t30: x500m.time_diff,
+          s10: x100m.kmh,
+          t10: x100m.time_diff,
+        });
+        //console.log("diff_arr:",position_dict.diff_arr)
+        //console.log("*************")
+      }
+    })();
+}, [current_location]);
 
 
-      {/* Saved location count*/}
-      <Circle_Text_Error renderBool={true}
-                          dispVal={arr_location_history.length.toLocaleString()}
-                          floatVal={arr_location_history.length}
-                          tresholds={[10, 30, 60]} top="60%" left="75%"
-                          afterText='DataPts' beforeText=''/>
-
-      {/*--------ROW 4----------*/}
-
-      <Circle_Image_Pace renderBool={sp_tim_inf !== undefined} speed_kmh={sp_tim_inf.s60} top="110%" left="15%" afterText={sp_tim_inf.t60 ? `(${sp_tim_inf.t60.toFixed(0)}s)` : ''}/>
-      <Circle_Image_Pace renderBool={sp_tim_inf !== undefined} speed_kmh={sp_tim_inf.s30} top="110%" left="40%" afterText={sp_tim_inf.t30 ? `(${sp_tim_inf.t30.toFixed(0)}s)` : ''}/>
-      <Circle_Image_Pace renderBool={sp_tim_inf !== undefined} speed_kmh={sp_tim_inf.s10} top="110%" left="65%" afterText={sp_tim_inf.t10 ? `(${sp_tim_inf.t10.toFixed(0)}s)` : ''}/>
-
-      <View style={{alignSelf:"center", alignItems:"center", alignContent:"center", marginTop: '80%', width: '100%'}}>
-          <View>
-            <Text>{screenText}</Text>
-          </View>
-      </View>
-
-      <View style={style_container.container}>
-        <Button disabled={!permits["mediaLibrary"] && (bool_record_locations || arr_location_history.length<=1)} onPress={() => saveToFile(arr_location_history)} title="RecordPositions" color = {this.disabled ? "#ff0000" : "#00ffff"} />
-      </View>
-
-    </View>
-  );
+    let content = null;
+    if (display_page_mode === 'Debug Screen') {
+      content = (
+        <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
+        <StatusBar style="auto" />
+  
+        {/*--------ROW 1----------*/}
+        <BT_Circle_Text_GPS renderBool={true} top="8%" left="4%"/>
+  
+        {/*meter error*/}
+        <Circle_Text_Error renderBool={true} 
+                           dispVal={current_location["coords"]["accuracy"].toFixed(3)} 
+                           floatVal={current_location["coords"]["accuracy"]}
+                           tresholds={[7, 12, 19]} top="5%" left="25%"
+                           afterText='Error(mt)'beforeText=''/>
+        {/*current time*/}
+        <Circle_Text_Error renderBool={true} 
+                           dispVal={getFormattedDateTime("dateclock")}
+                           floatVal={-1}
+                           tresholds={[2, 4, 6]} top="5%" left="75%"
+                           afterText='' beforeText=''/>
+                           
+  
+        {/*--------ROW 2----------*/}
+        {/*latitude, longitude, altitude*/}
+        <Circle_Text_Error renderBool={true} 
+                           dispVal={format_degree_to_string(current_location["coords"]["latitude"])} 
+                           floatVal={current_location["coords"]["accuracy"]}
+                           tresholds={[7, 12, 19]} top="30%" left="0%"
+                           beforeText='' afterText='Latitude'/>
+        <Circle_Text_Error renderBool={true} 
+                           dispVal={format_degree_to_string(current_location["coords"]["longitude"])} 
+                           floatVal={current_location["coords"]["accuracy"]}
+                           tresholds={[7, 12, 19]} top="30%" left="25%"
+                           beforeText='' afterText='Longtitude'/>
+        <Circle_Text_Error renderBool={true} 
+                           dispVal={format_degree_to_string(current_location["coords"]["altitude"])} 
+                           floatVal={current_location["coords"]["altitudeAccuracy"]}
+                           tresholds={[1, 3, 5]} top="30%" left="50%"
+                           beforeText='' afterText='Altitude'/>
+        {/*last data acquisition*/}
+        <DataAgeInSec renderBool={true} top="30%" left="75%" current_location={current_location}/>
+  
+        {/*--------ROW 3----------*/}
+        {/*total time*/}
+        <Circle_Text_Color renderBool={true} 
+                           dispVal={getReadableDuration(totalTime)}
+                           floatVal={-1}
+                           backgroundColor="rgb(200,200,200)" top="60%" left="0%"
+                           afterText='Total' beforeText=''/>
+        {/*active time*/}
+        <Circle_Text_Color renderBool={true}
+                            dispVal={getReadableDuration(activeTime)}
+                            floatVal={-1}
+                            backgroundColor="rgb(0,100,0)" top="60%" left="25%"
+                            afterText='Active' beforeText=''/>
+        {/*passive time*/}
+        <Circle_Text_Color renderBool={true}
+                            dispVal={getReadableDuration(passiveTime)}
+                            floatVal={-1}
+                            backgroundColor="#505050" top="60%" left="50%"
+                            afterText='Passive' beforeText=''/>
+  
+  
+        {/* Saved location count*/}
+        <Circle_Text_Error renderBool={true}
+                            dispVal={arr_location_history.length.toLocaleString()}
+                            floatVal={arr_location_history.length}
+                            tresholds={[10, 30, 60]} top="60%" left="75%"
+                            afterText='DataPts' beforeText=''/>
+  
+        {/*--------ROW 4----------*/}
+  
+        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s60} time_diff={sp_tim_inf_1.t60} top="110%" left="5%" beforeText={'meters'}/>
+        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s30} time_diff={sp_tim_inf_1.t30} top="110%" left="40%" beforeText={'seconds'}/>
+        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s10} time_diff={sp_tim_inf_1.t10} top="110%" left="75%" beforeText={'seconds'}/>
+  
+        <View style={{alignSelf:"center", alignItems:"center", alignContent:"center", marginTop: '80%', width: '100%'}}>
+            <View>
+              <Text>{screenText}</Text>
+            </View>
+        </View>
+  
+        <View style={style_container.container}>
+          <Button disabled={!permits["mediaLibrary"] && (bool_record_locations || arr_location_history.length<=1)} onPress={() => saveToFile(arr_location_history)} title="RecordPositions" color = {this.disabled ? "#ff0000" : "#00ffff"} />
+        </View>
+  
+        </View>
+      );
+    } else if (display_page_mode === 'SpeedScreens') {
+      content = (
+        <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
+        <StatusBar style="auto" />
+  
+        {/*--------ROW 1----------*/}
+        <BT_Circle_Text_GPS renderBool={true} top="8%" left="4%"/>
+  
+        {/*current time*/}
+        <Circle_Text_Error renderBool={true} 
+                           dispVal={getFormattedDateTime("dateclock")}
+                           floatVal={-1}
+                           tresholds={[2, 4, 6]} top={row_tops[0]} left="25%"
+                           afterText='' beforeText=''/>
+                           
+        {/*last data acquisition*/}
+        <DataAgeInSec renderBool={true} top={row_tops[0]} left="75%" current_location={current_location}/>
+  
+        {/*--------ROW 2----------*/}
+        {/*total time*/}
+        <Circle_Text_Color renderBool={true} 
+                           dispVal={getReadableDuration(totalTime)}
+                           floatVal={-1}
+                           backgroundColor="rgb(200,200,200)" top={row_tops[1]} left="10%"
+                           afterText='Total' beforeText=''/>
+        {/*active time*/}
+        <Circle_Text_Color renderBool={true}
+                            dispVal={getReadableDuration(activeTime)}
+                            floatVal={-1}
+                            backgroundColor="rgb(0,100,0)" top={row_tops[1]} left="40%"
+                            afterText='Active' beforeText=''/>
+        {/*passive time*/}
+        <Circle_Text_Color renderBool={true}
+                            dispVal={getReadableDuration(passiveTime)}
+                            floatVal={-1}
+                            backgroundColor="#505050" top={row_tops[1]} left="70%"
+                            afterText='Passive' beforeText=''/>
+  
+        {/*--------ROW 3----------*/}
+        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s60} time_diff={sp_tim_inf_1.t60} top={row_tops[2]} left="5%" beforeText={'seconds'}/>
+        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s30} time_diff={sp_tim_inf_1.t30} top={row_tops[2]} left="40%" beforeText={'seconds'}/>
+        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s10} time_diff={sp_tim_inf_1.t10} top={row_tops[2]} left="75%" beforeText={'seconds'}/>
+  
+        {/*--------ROW 4----------*/}
+        <Circle_Image_Pace renderBool={sp_tim_inf_2 !== undefined} speed_kmh={sp_tim_inf_2.s60} time_diff={sp_tim_inf_2.t60} top={row_tops[3]} left="5%" beforeText={'meters'}/>
+        <Circle_Image_Pace renderBool={sp_tim_inf_2 !== undefined} speed_kmh={sp_tim_inf_2.s30} time_diff={sp_tim_inf_2.t30} top={row_tops[3]} left="40%" beforeText={'meters'}/>
+        <Circle_Image_Pace renderBool={sp_tim_inf_2 !== undefined} speed_kmh={sp_tim_inf_2.s10} time_diff={sp_tim_inf_2.t10} top={row_tops[3]} left="75%" beforeText={'meters'}/>
+  
+        </View>
+      );
+    }
+    return (
+      <>
+        {content}
+      </>
+    );
 }

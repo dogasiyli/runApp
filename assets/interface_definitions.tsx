@@ -23,6 +23,16 @@ export interface CircleTextGPSProps {
   top:string;
   left:string;
 }
+export interface CircleClickableProps {
+  renderBool: boolean;
+  top:string;
+  left:string;
+  size_perc:number;
+  nav:any;
+  page_name:string;
+  page_navigate_str:string;
+  display_page_mode?:string;
+}
 
 export interface DisplayDataProps {
   renderBool: boolean;
@@ -56,11 +66,14 @@ export interface CircleTextColorProps {
   export interface CircleImagePaceProps {
     renderBool: boolean;
     speed_kmh: number;
+    time_diff: number;
     beforeText?: string;
     afterText?: string;
     top: string;
     left: string;
   }
+
+
 
 export interface MoveableImageProps {
   id:number;

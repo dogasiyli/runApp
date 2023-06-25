@@ -5,10 +5,11 @@ import React, { useContext, useRef, useState } from 'react';
 import Slider from '@react-native-community/slider';
 
 import { style_movable } from '../../sheets/styles';
-import { format_time_diff } from '../../asyncOperations/utils';
+import { format_time_diff, calc_pace_from_kmh } from '../../asyncOperations/utils';
 
-import { ViewRCProps, CircleTextErrorProps, CircleTextColorProps, CircleTextGPSProps, 
+import { ViewRCProps, CircleTextErrorProps, CircleTextColorProps, CircleTextGPSProps, CircleClickableProps,
          CircleImagePaceProps, DisplayDataProps, MoveableImageProps } from '../../assets/interface_definitions';
+import { getReadableDuration } from '../../asyncOperations/fileOperations';
 
 const button_images = {
   "moveable_default": require('../../assets/pngs/defaultMoveable.png'),
@@ -38,18 +39,22 @@ const minPace = run_tresholds[0];
 const maxPace = run_tresholds[run_tresholds.length - 1];
 
 const calculatePaceRGB = (pace: number) => {
-  const normalizedPace = Math.max(minPace, Math.min(maxPace, pace));
-  const index1 = Math.min(Math.floor((normalizedPace - minPace) / (maxPace - minPace) * (run_colors.length - 1)), run_colors.length - 1);
-  const index2 = Math.min(index1 + 1, run_colors.length - 1);
-  const color1 = run_colors[index1];
-  const color2 = run_colors[index2];
-  const percentage = (normalizedPace - run_tresholds[index1]) / (run_tresholds[index2] - run_tresholds[index1]);
-  
-  const R = Math.round(parseInt(color1.slice(1, 3), 16) * (1 - percentage) + parseInt(color2.slice(1, 3), 16) * percentage);
-  const G = Math.round(parseInt(color1.slice(3, 5), 16) * (1 - percentage) + parseInt(color2.slice(3, 5), 16) * percentage);
-  const B = Math.round(parseInt(color1.slice(5, 7), 16) * (1 - percentage) + parseInt(color2.slice(5, 7), 16) * percentage);
+  try {
+    const normalizedPace = Math.max(minPace, Math.min(maxPace, pace));
+    const index1 = Math.min(Math.floor((normalizedPace - minPace) / (maxPace - minPace) * (run_colors.length - 1)), run_colors.length - 1);
+    const index2 = Math.min(index1 + 1, run_colors.length - 1);
+    const color1 = run_colors[index1];
+    const color2 = run_colors[index2];
+    const percentage = (normalizedPace - run_tresholds[index1]) / (run_tresholds[index2] - run_tresholds[index1]);
+    
+    const R = Math.round(parseInt(color1.slice(1, 3), 16) * (1 - percentage) + parseInt(color2.slice(1, 3), 16) * percentage);
+    const G = Math.round(parseInt(color1.slice(3, 5), 16) * (1 - percentage) + parseInt(color2.slice(3, 5), 16) * percentage);
+    const B = Math.round(parseInt(color1.slice(5, 7), 16) * (1 - percentage) + parseInt(color2.slice(5, 7), 16) * percentage);
 
-  return `rgb(${R}, ${G}, ${B})`;
+    return `rgb(${isNaN(R) ? 0 : R}, ${isNaN(G) ? 0 : G}, ${isNaN(B) ? 0 : B})`;
+  } catch (e) {
+    return `rgb(255,0,0)`;
+  }
 };
 
 const selectRunImage = (pace: number) => {
@@ -320,6 +325,7 @@ export const MoveableImage: React.FunctionComponent<MoveableImageProps> = ({id, 
 export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
   renderBool,
   speed_kmh,
+  time_diff,
   beforeText = '',
   afterText = '',
   top,
@@ -334,6 +340,19 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
 
   const backgroundColor = calculatePaceRGB(speed_kmh);
   const imageSource = selectRunImage(speed_kmh);
+  let paceFloat = calc_pace_from_kmh(speed_kmh, false);
+  paceFloat = paceFloat < 0.05 ? 0.0 : paceFloat;
+  afterText = afterText=='' ? (paceFloat > 0.1 ? 'pace:'+getReadableDuration(paceFloat*60000) : '') : afterText
+  if (beforeText==="meters")
+  {
+    let distance_meters = 1000* speed_kmh * (time_diff / (1000 * 60 * 60));
+    beforeText = distance_meters  < 500 ? distance_meters.toFixed(1) + "mt" : (distance_meters/1000).toFixed(2) + "km";
+  }
+  if (beforeText==="seconds")
+  {
+    beforeText = time_diff ? time_diff.toFixed(0) + "sec" : "-";
+  }
+  const afterTextFontSize = afterText.length > 10 ? 10 : 20;
 
   return (
     <View
@@ -343,9 +362,12 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
         marginTop: top,
         left: left,
         justifyContent: 'flex-start',
-        alignItems: 'flex-start',
+        alignItems: 'center',
       }}
     >
+      <Text style={{ bottom: circleSize / 8, textAlign: 'center', color: 'yellow', fontSize:12 }}>
+          {beforeText}
+        </Text>
       <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
         <Image
           source={imageSource}
@@ -358,13 +380,39 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
             marginBottom: 10,
           }}
         />
-        <Text style={{ bottom: circleSize / 8, textAlign: 'center' }}>
+        <Text style={{ bottom: circleSize / 8, textAlign: 'center', color:"white", fontSize:20 }}>
           {speed_kmh.toFixed(1)}kmh
         </Text>        
-        <Text style={{ bottom: circleSize / 8, textAlign: 'center' }}>
+        <Text style={{ bottom: circleSize / 8, textAlign: 'center', color:"white", fontSize:afterTextFontSize }}>
           {afterText}
         </Text>
       </View>
+    </View>
+  );
+};
+
+export const BT_Circle_Clickable: React.FC<CircleClickableProps> = ({ renderBool, top, left, size_perc, nav, page_name, page_navigate_str, display_page_mode }) => {
+  if (!renderBool) {
+    return null;
+  }
+  const { width } = Dimensions.get('window');
+  const circleSize = width * size_perc; // Adjust the percentage as needed
+  const bgc = '#ff7777';
+  return (
+    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+      <TouchableHighlight underlayColor="transparent" 
+                          onPress={() => nav.navigate(page_navigate_str, {display_page_mode:display_page_mode})} >
+        <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
+          <Text
+            disabled={false}
+            style={{ backgroundColor:bgc, width: circleSize, height: circleSize, textAlign: 'center', lineHeight: circleSize, borderRadius: circleSize / 2 }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {page_name}
+          </Text>
+        </View>
+      </TouchableHighlight>
     </View>
   );
 };

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { INIT_PERMITS, INIT_POSITION } from '../assets/constants';
+import { PositionDict } from './types';
 
 export interface MoveableImageDict
 {
@@ -25,6 +26,8 @@ interface StateContextType {
 
     arr_location_history:Array<object>;
     set_location_history: React.Dispatch<React.SetStateAction<Array<object>>>;
+    position_dict:Array<PositionDict>;
+    set_position_dict: React.Dispatch<React.SetStateAction<Array<PositionDict>>>;
 
     moveableImages:Array<MoveableImageDict>;
     setMoveableImages: React.Dispatch<React.SetStateAction<Array<MoveableImageDict>>>;
@@ -60,6 +63,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [current_location, set_current_location] = useState(INIT_POSITION);
     const [bool_record_locations, enable_record_locations] = useState(false);
     const [arr_location_history, set_location_history] = useState(new Array(INIT_POSITION));
+    const [position_dict, set_position_dict] = useState(new Array<PositionDict>());
 
     const [initTimestamp, setInitTimestamp] = useState(null);
     const [lastTimestamp, setLastTimestamp] = useState(null);
@@ -81,6 +85,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 bool_record_locations, enable_record_locations, 
                 bool_update_locations, enable_update_locations,
                 arr_location_history, set_location_history,
+                position_dict, set_position_dict,
                 moveableImages, setMoveableImages,
 
                 initTimestamp, setInitTimestamp,

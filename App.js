@@ -20,11 +20,12 @@ export default function App() {
     <View style={style_container.container}>
       <AppStateProvider>
         <NavigationContainer>
-          <Stack.Navigator>
+        <Stack.Navigator screenOptions={{headerStyle: { backgroundColor: 'purple' },}}>
           <Stack.Screen name="Home" component={Screen_Home} />
-          <Stack.Screen name="GPS_Debug" component={Screen_GPS_Debug} />
+          <Stack.Screen name="GPS_Debug" component={Screen_GPS_Debug} options={({ route }) => ({ title: route.params?.display_page_mode ||  "Debug GPS" })} />
           <Stack.Screen name="Moveable_Points" component={Screen_MoveablePoints} />
           <Stack.Screen name="Screen_Navigation" component={Screen_Navigations} options={{headerShown:false}}/>
+          <Stack.Screen name="SpeedScreeN" component={Screen_GPS_Debug}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "SpeedScreen" })} />
           </Stack.Navigator>
         </NavigationContainer>
       </AppStateProvider>

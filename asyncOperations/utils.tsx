@@ -72,7 +72,7 @@ const deg_dms = (deg: number): string => {
   return `${d}° ${m}' ${s}"`;
 };
 
-const calc_pace_from_kmh = (kmh: number, verbose: boolean = false): number => {
+export const calc_pace_from_kmh = (kmh: number, verbose: boolean = false): number => {
   const pace = 60 / kmh;
   if (verbose) {
     const minutes = Math.floor(pace);
@@ -86,7 +86,7 @@ const calc_run_params = (dist_in_meters: number, time_in_seconds: number, verbos
   const mps = dist_in_meters / time_in_seconds;
   const kmh = mps * 3.6;
   if (verbose) {
-    console.log(`Kilometers per hour: ${kmh}`);
+    console.log(`Meters per second: ${mps}, Kilometers per hour: ${kmh}, Distance: ${dist_in_meters} meters, Time: ${time_in_seconds} seconds`);
   }
   const pace = calc_pace_from_kmh(kmh, verbose);
   return [pace, kmh];
@@ -221,7 +221,7 @@ export const calc_geodesic = async (p1: any, p2: any, verbose: boolean = false):
     }
   
     return results;
-  }
+}
   
 export const get_last_dist = (arr_location_history: any[], n: number, verbose: boolean) => {
   const N = arr_location_history.length;
@@ -244,4 +244,136 @@ export const get_last_dist = (arr_location_history: any[], n: number, verbose: b
   const p2 = arr_location_history[lastIndex];
 
   return calc_geodesic(p1, p2, verbose);
+};
+
+export const get_dist_time = (posDict: any, interval: number, calc_type: string, verbose: boolean) => {
+  let sum_milisec = 0;
+  let sum_meters = 0;
+  let diff_msec = 0;
+  if (!posDict) {
+    return {
+      distance: 0,
+      pace: 0,
+      kmh: 0,
+      time_diff: 0,
+    };
+  }
+  let i;
+  if (posDict.diff_arr && posDict.diff_arr.length > 1) {
+    i = posDict.diff_arr.length - 1;
+  } else {
+    return {
+      distance: 0,
+      pace:0,
+      kmh:0,
+      time_diff: 0,
+    };
+  }
+
+  while (i >= 0 && (calc_type==="seconds" ? sum_milisec <= interval : sum_meters <= interval)) {
+    diff_msec = posDict.diff_arr[i][1];
+    if (diff_msec > 10) {
+      continue;
+    }
+    sum_meters += posDict.diff_arr[i][0];
+    sum_milisec += diff_msec;
+    i--;
+  }
+
+  
+  //console.log("sum_meters:", sum_meters, "sum_milisec:", sum_milisec, "i:", i+1, "interval:", interval, "isSeconds:", isSeconds, "lenght arr:", posDict.diff_arr.length);
+  const [pace, kmh] = calc_run_params(sum_meters, sum_milisec);
+
+  return {
+    distance: sum_meters,
+    pace,
+    kmh,
+    time_diff: sum_milisec,
+  };
+};
+
+
+export const update_pos_array = async (arr_location_history: any[], pos_dict: any, set_pos_dict: any): Promise<any> => {
+  //initialize posDict with the first position in arr_location_history
+  if (!arr_location_history)
+  {
+    return;
+  }
+  //console.log("********************************");
+  //console.log("update_pos_array len=", arr_location_history.length);
+  if (arr_location_history.length === 1 && !pos_dict) {
+    const initial_ts: number = arr_location_history[0]['timestamp'];
+    pos_dict = {
+      ts: {
+        initial: initial_ts,
+        final: initial_ts
+      }
+    };
+    set_pos_dict(pos_dict);
+    return;
+  }
+
+  // if there is no posDict.loc and arr_location_history has at least 2 positions, initialize posDict.loc
+  if (!pos_dict.loc && arr_location_history.length >= 2) {
+    pos_dict.loc = [];
+    pos_dict.diff_arr = [];
+  }
+
+  if (arr_location_history.length > 1) {
+    const initial_ts: number = arr_location_history[0]['timestamp'];
+    const final_ts: number = arr_location_history[arr_location_history.length - 1]['timestamp'];
+
+    // if there is no posDict.ts, initialize it
+    if (!pos_dict || !pos_dict.ts) {
+      //console.log("initialized pos_dict here");
+      pos_dict = {
+        ts: {
+          initial: initial_ts,
+          final: final_ts
+        }
+      };
+    } 
+    else {
+      // if there is no initial timestamp, set it to the first timestamp in arr_location_history
+      if (!pos_dict.ts.initial) {
+        pos_dict.ts.initial = initial_ts;
+      }
+      // if there is no final timestamp, set it to the last timestamp in arr_location_history
+      if (!pos_dict.ts.final) {
+        pos_dict.ts.final = final_ts;
+      }
+      // Find the minimum timestamp in arr_location_history that is less than posDict.ts.final
+      // start by looking at the last item in arr_location_history
+      // when it is less than posDict.ts.final, break and use that timestamp as the minimum
+      let minTimestamp = pos_dict.ts.final;
+      let i = arr_location_history.length - 1;
+      for (; i >= 0; i--) {
+        const timestamp = arr_location_history[i]['timestamp'];
+        if (timestamp <= pos_dict.ts.final) {
+          minTimestamp = timestamp;
+          //console.log("break at timestamp @i=",i, ", pos_dict.ts.final(", pos_dict.ts.final,"), minTimestamp(", minTimestamp,")");
+          break;
+        }
+      }
+      // now minTimestamp is the maximum timestamp in arr_location_history that is less than or equal to posDict.ts.final
+      // and i is the index of that timestamp in arr_location_history
+      // Add all arr_location_history item diffs accordingly
+      let prevLocation = arr_location_history[i];
+      for (; i < arr_location_history.length - 1; i++) {
+        //console.log("push dif between i(",i,", ",i+1,")");
+        const location = arr_location_history[i + 1];
+        const diff_milisecs = location['timestamp'] - prevLocation['timestamp'];
+        pos_dict.loc.push([location.coords.latitude, location.coords.longitude, location.coords.altitude, location.coords.accuracy, location.coords.altitudeAccuracy, diff_milisecs]);
+        const dif_last_two = await calc_geodesic(prevLocation, location, false);
+        pos_dict.diff_arr.push([dif_last_two.s_geo_len, dif_last_two.time_diff,i]);
+        //console.log("i",i,"--dif_last_two:", dif_last_two);
+        prevLocation = location;
+      }
+      //console.log("updated ", pos_dict.ts.final," to ", arr_location_history[arr_location_history.length - 1]['timestamp']);
+      pos_dict.ts.final = arr_location_history[arr_location_history.length - 1]['timestamp'];
+    }
+    set_pos_dict(pos_dict);
+    return;
+  }
+  return;
 };
