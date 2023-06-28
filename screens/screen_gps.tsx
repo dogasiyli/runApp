@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 
 import { getPermits, useLocationForeground, registerBackgroundFetchAsync } from '../asyncOperations/requests';
 
-import { INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND, OfflineLocationData } from '../assets/constants';
+import { INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND } from '../assets/constants';
 
 
 import { getFormattedDateTime } from '../asyncOperations/fileOperations';
@@ -17,19 +17,19 @@ import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../asyncOperations/requests';
 import { on_new_gps_data } from '../asyncOperations/gpsOperations';
-import { handleTimerInterval, get_dist_time } from '../asyncOperations/utils';
+import { handleTimerInterval, } from '../asyncOperations/utils';
 
-import { SpeedTimeInfo } from '../assets/interface_definitions';
-import { CoveredDistance } from '../assets/types';
-import { updateLocationHistory, updatePosDict, updateDistances } from '../asyncOperations/asyncCalculations';
-
+import { CoveredDistance, SpeedTimeCalced_Dict } from '../assets/types';
+import { updateLocationHistory, updatePosDict, updateDistances, updateCalcedResults } from '../asyncOperations/asyncCalculations';
+import { CALC_TIMES_FIXED, CALC_DISTANCES_FIXED } from '../assets/constants';
 
 export function Screen_GPS_Debug({route}) {
   const insets = useSafeAreaInsets();
   const [screenText, setscreenText] = useState("No locations yet");
   const [isCalculating, setIsCalculating] = useState(false);
-  const [sp_tim_inf_1, setSpeedTimeInfo_1] = useState<SpeedTimeInfo>({ s60: 0,s30: 0,s10: 0,t60: 0,t30: 0,t10: 0,});
-  const [sp_tim_inf_2, setSpeedTimeInfo_2] = useState<SpeedTimeInfo>({ s60: 0,s30: 0,s10: 0,t60: 0,t30: 0,t10: 0,});
+
+  const [stDict, setStDict] = useState<SpeedTimeCalced_Dict>({});
+  
   const [coveredDistance, setCoveredDistance] = useState<CoveredDistance>({   distance_all: 0,distance_last: 0,time_diff_last: 0,dist_to_start: 0});
   const { set_permits, 
           bool_location_background_started, set_location_background_started,
@@ -180,7 +180,7 @@ export function Screen_GPS_Debug({route}) {
   // useEffect appending updated location to arr_location_history
   useEffect(() => {
     const fetchData = async () => {
-      console.log("try fetchData ", isCalculating, bool_record_locations);
+      //console.log("try fetchData ", isCalculating, bool_record_locations);
       if (bool_record_locations) {
         await updateLocationHistory(arr_location_history, bool_record_locations, current_location);
         await updatePosDict(arr_location_history, pos_array_kalman, pos_array_diffs, 
@@ -204,34 +204,20 @@ export function Screen_GPS_Debug({route}) {
     let isMounted = true;
     // Define an inner async function and call it immediately
     (async () => {
+      //console.log("++++++++++++++++")      
+      //console.log("stDict:",stDict, stDict_hasKey(stDict, "noesence"))
       if (isMounted && bool_record_locations && (display_page_mode === 'SpeedScreens' || display_page_mode === 'Debug Screen')) {
-        const x60s = await get_dist_time(pos_array_diffs, 40, "seconds", false)
-        const x30s = await get_dist_time(pos_array_diffs, 20, "seconds", false);
-        const x10s = await get_dist_time(pos_array_diffs, 5, "seconds", false);
-        setSpeedTimeInfo_1({
-          s60: x60s.kmh,
-          t60: x60s.time_diff,
-          s30: x30s.kmh,
-          t30: x30s.time_diff,
-          s10: x10s.kmh,
-          t10: x10s.time_diff,
-        });
+        await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[0]);
+        await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[1]);
+        await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[2]);
+
       }
       if (isMounted && bool_record_locations && display_page_mode === 'SpeedScreens') {
-        const x1km = await get_dist_time(pos_array_diffs, 100, "meters", false)
-        const x500m = await get_dist_time(pos_array_diffs, 50, "meters", false);
-        const x100m = await get_dist_time(pos_array_diffs, 10, "meters", false);
-        setSpeedTimeInfo_2({
-          s60: x1km.kmh,
-          t60: x1km.time_diff,
-          s30: x500m.kmh,
-          t30: x500m.time_diff,
-          s10: x100m.kmh,
-          t10: x100m.time_diff,
-        });       
-        //console.log("diff_arr:",position_dict.diff_arr)
-        //console.log("*************")
+        await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[0]);
+        await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[1]);
+        await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[2]);
       }
+      //console.log(stDict)
     })();
 
     return () => {
@@ -243,9 +229,9 @@ export function Screen_GPS_Debug({route}) {
 
     let content = null;
     if (display_page_mode === 'Debug Screen') {
-      content = <DebugScreen insets={insets} sp_tim_inf_1={sp_tim_inf_1} screenText={screenText}/>;
+      content = <DebugScreen insets={insets} stDict={stDict} screenText={screenText}/>;
     } else if (display_page_mode === 'SpeedScreens') {
-      content = <SpeedScreen insets={insets} sp_tim_inf_1={sp_tim_inf_1} sp_tim_inf_2={sp_tim_inf_2} covered_dist={coveredDistance}/>;
+      content = <SpeedScreen insets={insets} stDict={stDict} covered_dist={coveredDistance}/>;
     }
     return (
       <>

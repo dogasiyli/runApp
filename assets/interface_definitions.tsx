@@ -3,15 +3,6 @@ export interface TimestampDiffInfoProps {
     Diff_In_Seconds: number;
 }
 
-export interface SpeedTimeInfo {
-  s60: number;
-  s30: number;
-  s10: number;
-  t60: number;
-  t30: number;
-  t10: number;
-}
-
 export interface ViewRCProps {
     trueStr:string;
     falseStr:string;
@@ -57,10 +48,11 @@ export interface CircleTextColorProps {
     dispVal: number | string;
     beforeText: string;
     afterText: string;
-    floatVal: number;
+    floatVal?: number;
     backgroundColor: string;
-    top:string;
-    left:string;
+    top:string|number;
+    left:string|number;
+    circleSize?: number;
   }
 
   export interface CircleImagePaceProps {

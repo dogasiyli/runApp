@@ -5,21 +5,23 @@ import { BT_Circle_Text_GPS, Circle_Text_Error, Circle_Text_Color, DataAgeInSec,
 import { useAppState } from '../assets/stateContext';    
 import { saveToFile, saveToFile_multiple, getFormattedDateTime, getReadableDuration } from '../asyncOperations/fileOperations';
 import { format_degree_to_string } from '../asyncOperations/utils';
-import { SpeedTimeInfo } from '../assets/interface_definitions';
 import { style_container } from '../sheets/styles';
+import { CALC_TIMES_FIXED, CALC_DISTANCES_FIXED } from '../assets/constants';
+import { SpeedTimeCalced_Dict, stDict_hasKey } from '../assets/types';
 
 interface DebugScreenProps {
   insets: any;
-  sp_tim_inf_1: SpeedTimeInfo;
+  stDict: SpeedTimeCalced_Dict;
   screenText:string;
 }
 
-export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, sp_tim_inf_1, screenText }) => {
+export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, stDict, screenText }) => {
     const { permits, current_location,
         bool_record_locations, arr_location_history, 
-        activeTime, passiveTime, totalTime, position_dict } = useAppState();
+        activeTime, passiveTime, totalTime, pos_array_diffs } = useAppState();
     const save_button_disabled = !permits["mediaLibrary"] || bool_record_locations || arr_location_history.length<=1;
-
+    const last_or_best_dist = "last";
+    const last_or_best_time = "last";
   // Use the state variables from the context as needed in this component
 
   return (
@@ -93,9 +95,34 @@ export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, sp_tim_inf_1, 
 
         {/*--------ROW 4----------*/}
 
-        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s60} time_diff={sp_tim_inf_1.t60} top="110%" left="5%" beforeText={'meters'}/>
-        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s30} time_diff={sp_tim_inf_1.t30} top="110%" left="40%" beforeText={'seconds'}/>
-        <Circle_Image_Pace renderBool={sp_tim_inf_1 !== undefined} speed_kmh={sp_tim_inf_1.s10} time_diff={sp_tim_inf_1.t10} top="110%" left="75%" beforeText={'seconds'}/>
+        <Circle_Image_Pace renderBool={stDict !== undefined} 
+                           speed_kmh={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[0].toFixed(0)}s`) ? (
+                                last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}s`].last_speed
+                                                             : stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}s`].best_speed) : 0} 
+                           time_diff={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[0].toFixed(0)}s`) ? (
+                                last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}s`].last_time
+                                                            : stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}s`].best_time) : 0} 
+                           top="110%" left="5%" beforeText={'meters'}/>
+        <Circle_Image_Pace renderBool={stDict !== undefined} 
+                           speed_kmh={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[0].toFixed(0)}s`) ? (
+                                  last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].last_speed
+                                                              : stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].best_speed) : 0
+                                  } 
+                           time_diff={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[0].toFixed(0)}s`) ? (
+                                  last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].last_time
+                                                              : stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].best_time) : 0
+                                  } 
+                           top="110%" left="40%" beforeText={'seconds'}/>
+        <Circle_Image_Pace renderBool={stDict !== undefined} 
+                           speed_kmh={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[1].toFixed(0)}s`) ? (
+                            last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].last_speed
+                                                        : stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].best_speed) : 0
+                            } 
+                           time_diff={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[1].toFixed(0)}s`) ? (
+                            last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].last_time
+                                                        : stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].best_time) : 0
+                            } 
+                     top="110%" left="75%" beforeText={'seconds'}/>
 
         <View style={{alignSelf:"center", alignItems:"center", alignContent:"center", marginTop: '80%', width: '100%'}}>
             <View>
@@ -106,7 +133,7 @@ export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, sp_tim_inf_1, 
         <View style={style_container.container}>
             <View style={{ flexDirection: 'row' }}>
                 <Button disabled={save_button_disabled} onPress={() => saveToFile(arr_location_history)} title="RecordPositions" color = {save_button_disabled ? "#ff0000" : "#00ffff"} />
-                <Button disabled={save_button_disabled} onPress={() => saveToFile_multiple([arr_location_history, position_dict])} title="RecordMultiple" color = {save_button_disabled ? "#ff0000" : "#00ff00"} />
+                <Button disabled={save_button_disabled} onPress={() => saveToFile_multiple([arr_location_history, pos_array_diffs])} title="RecordMultiple" color = {save_button_disabled ? "#ff0000" : "#00ff00"} />
             </View>
         </View>
     </View>

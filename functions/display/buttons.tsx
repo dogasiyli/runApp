@@ -210,30 +210,48 @@ export const Circle_Text_Error: React.FC<CircleTextErrorProps> = ({ renderBool, 
   );
 };
 
-export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({ renderBool, dispVal, beforeText='', afterText='', floatVal, top, left, backgroundColor }) => {
+export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({ renderBool, dispVal, circleSize=0.22, beforeText='', afterText='', floatVal=-1, top, left, backgroundColor }) => {
   if (!renderBool) {
     return null;
   }
 
   const { width } = Dimensions.get('window');
-  const circleSize = width * 0.22; // Adjust the percentage as needed
+  if ((circleSize==0 || circleSize>1000) && floatVal==circleSize)
+  {
+    //here circleSize is expected to be the time in miliseconds - hence:
+    circleSize = 0.12;
+    circleSize += floatVal>=60*1000 ? 0.01 : 0.0;//additional 0.01 for seconds to minutes
+    circleSize += floatVal>=10*60*1000 ? 0.01 : 0.0;//additional 0.02 for more than 10 minutes
+    circleSize += floatVal>=60*60*1000 ? 0.01 : 0.0;//additional 0.1 for minutes to hours
+    circleSize += floatVal>=10*60*60*1000 ? 0.02 : 0.0;//additional 0.1 for more than 10hours
+  }
+  if (typeof top === 'number')
+  {
+    top = 8 + top*circleSize*45;
+    top = `${top}%`
+  }
+  if (typeof left === 'number')
+  {
+    left = 52 + left*circleSize*50;
+    left = `${left}%`
+  }
+  const circleW = width * circleSize; // Adjust the percentage as needed
 
-  //const backgroundColor = floatVal < 0 ? `rgb(200,200,200)` :`rgb(${R}, ${G}, ${B})`;
 
   return (
     <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-      <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
+      <View style={{ borderRadius: circleW / 2, overflow: 'hidden' }}>
         <Text
           disabled={false}
-          style={{ backgroundColor:backgroundColor, width: circleSize, height: circleSize, textAlign: 'center', 
-                   lineHeight: circleSize, borderRadius: circleSize / 2,
+          style={{ backgroundColor:backgroundColor, width: circleW, height: circleW, textAlign: 'center', 
+                   lineHeight: circleW, borderRadius: circleW / 2,
                    top:0, marginBottom:10}}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
              {beforeText} {typeof dispVal === 'string' ? dispVal : ''} 
         </Text>
-        <Text style={{bottom:circleSize/2, textAlign: 'center'} }>
+        <Text style={{bottom:circleW/2, textAlign: 'center'} }>
           {typeof dispVal === 'number' ? dispVal.toFixed(3) : ''} 
           {afterText}
         </Text>
@@ -345,7 +363,8 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
   afterText = afterText=='' ? (paceFloat > 0.1 ? 'pace:'+getReadableDuration(paceFloat*60000) : '') : afterText
   if (beforeText==="meters")
   {
-    let distance_meters = 1000* speed_kmh * (time_diff / (1000 * 60 * 60));
+    let distance_meters = 1000* speed_kmh * (time_diff / (60 * 60));
+    //console.log("check:", distance_meters, speed_kmh, time_diff)
     beforeText = distance_meters  < 500 ? distance_meters.toFixed(1) + "mt" : (distance_meters/1000).toFixed(2) + "km";
   }
   if (beforeText==="seconds")
