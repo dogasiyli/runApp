@@ -383,7 +383,7 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
         <Text style={{ bottom: circleSize / 8, textAlign: 'center', color:"white", fontSize:20 }}>
           {speed_kmh.toFixed(1)}kmh
         </Text>        
-        <Text style={{ bottom: circleSize / 8, textAlign: 'center', color:"white", fontSize:afterTextFontSize }}>
+        <Text style={{ bottom: circleSize / 5.5, textAlign: 'center', color:"white", fontSize:afterTextFontSize }}>
           {afterText}
         </Text>
       </View>

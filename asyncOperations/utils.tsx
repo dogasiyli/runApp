@@ -1,4 +1,5 @@
 import { TimestampDiffInfoProps } from "../assets/interface_definitions";
+import { GeodesicResult, CoveredDistance} from "../assets/types";
 
 export const format_time_diff = (time_diff: number): TimestampDiffInfoProps => {
   const diffInSeconds = Math.floor(time_diff/1000);
@@ -92,7 +93,7 @@ const calc_run_params = (dist_in_meters: number, time_in_seconds: number, verbos
   return [pace, kmh];
 };
 
-export const calc_geodesic = async (p1: any, p2: any, verbose: boolean = false): Promise<any> => {  
+export const calc_geodesic = async (p1: any, p2: any, verbose: boolean = false): Promise<GeodesicResult> => {  
     let time_diff: number, φ1: number, φ2: number, λ1: number, λ2: number;
     if (p1.coords && p2.coords) {
       const t1 = new Date(p1.timestamp);
@@ -169,6 +170,7 @@ export const calc_geodesic = async (p1: any, p2: any, verbose: boolean = false):
         α2: 0,
         pace: 0,
         kmh: 0,
+        time_diff: 1,
       };
     }
   
@@ -223,7 +225,7 @@ export const calc_geodesic = async (p1: any, p2: any, verbose: boolean = false):
     return results;
 }
   
-export const get_last_dist = (arr_location_history: any[], n: number, verbose: boolean) => {
+export const get_last_dist = async (arr_location_history: any[], n: number, verbose: boolean):Promise<GeodesicResult> => {
   const N = arr_location_history.length;
 
   const lastIndex = Math.max(N - 1, 1);
@@ -236,6 +238,7 @@ export const get_last_dist = (arr_location_history: any[], n: number, verbose: b
       α2: 0,
       pace: 0,
       kmh: 0,
+      time_diff: 1,
     };
   }
 
@@ -292,88 +295,150 @@ export const get_dist_time = (posDict: any, interval: number, calc_type: string,
   };
 };
 
+export const get_dist_covered = async (arr_location_history: any[], posDict: any, ignore_duration: number, verbose: boolean):Promise<CoveredDistance> => {
+  let sum_meters_all = 0.1;
+  let sum_meters_last = 0.1;
+  let sum_seconds_last = 0.1;
+  let diff_msec = 0.0;
+  let bool_stop_last_add = false;
 
-export const update_pos_array = async (arr_location_history: any[], pos_dict: any, set_pos_dict: any): Promise<any> => {
-  //initialize posDict with the first position in arr_location_history
+  console.log("ola")
+  if (!posDict) {
+    console.log("no dist covered yet 1")
+    return {
+      distance_all: 0,
+      distance_last: 0,
+      time_diff_last: 0,
+      dist_to_start: 0
+    };
+  }
+
+  let i = 0;
+  if (posDict.diff_arr && posDict.diff_arr.length > 1) {
+    i = posDict.diff_arr.length - 1;
+  } 
+  else {
+    console.log("no dist covered yet 2")
+    return {
+      distance_all: 0,
+      distance_last: 0,
+      time_diff_last: 0,
+      dist_to_start: 0
+    };
+  }
+
+  console.log("start:", i);
+  // at first ignore_duration stop adding to sum_meters_last
+  while (i >= 0) {
+    diff_msec = posDict.diff_arr[i][1];
+    bool_stop_last_add = bool_stop_last_add || (diff_msec >= ignore_duration);
+
+    sum_seconds_last += bool_stop_last_add ? 0 : diff_msec;
+    sum_meters_last += bool_stop_last_add ? 0 : posDict.diff_arr[i][0];
+    sum_meters_all += (diff_msec <= ignore_duration) ? posDict.diff_arr[i][0] : 0;
+    //console.log(i, ". sum_seconds_last:", sum_seconds_last, "sum_meters_last:", sum_meters_last, "sum_meters_all:", sum_meters_all);
+
+    if  (diff_msec >= ignore_duration) {
+      console.log("ignore at:", i, ", diff_msec:", diff_msec, ", ignore_duration:", ignore_duration)
+    }
+    else{
+      console.log("go on at:", i, ", diff_msec:", diff_msec, ", ignore_duration:", ignore_duration)
+    }
+    i--;
+  }
+  console.log("exited at:", i)
+
+  const dist_to_start = await get_last_dist(arr_location_history, arr_location_history.length, false);
+  console.log("dist_to_start:", dist_to_start)
+
+  return {
+    distance_all: sum_meters_all,
+    distance_last: sum_meters_last,
+    time_diff_last: sum_seconds_last,
+    dist_to_start: dist_to_start.s_geo_len
+  };
+};
+
+export const initialize_post_dict = async (arr_location_history: any[]): Promise<any> => {
+  if (!arr_location_history || arr_location_history.length === 0) {
+    return null;
+  }
+
+  const initial_ts: number = arr_location_history[0]['timestamp'];
+  const final_ts: number = arr_location_history[arr_location_history.length - 1]['timestamp'];
+
+  const pos_dict = {
+    ts: {
+      initial: initial_ts,
+      final: final_ts
+    },
+    loc : [],
+    diff_arr : [],
+  };
+
+  return pos_dict;
+};
+
+
+export const update_pos_array = async (arr_location_history: any[], pos_dict: any): Promise<any> => {
+  let locs = [];
+  let diffs = [];
   if (!arr_location_history)
   {
-    return;
+    return [[], [], null];
   }
-  //console.log("********************************");
-  //console.log("update_pos_array len=", arr_location_history.length);
-  if (arr_location_history.length === 1 && !pos_dict) {
-    const initial_ts: number = arr_location_history[0]['timestamp'];
-    pos_dict = {
-      ts: {
-        initial: initial_ts,
-        final: initial_ts
-      }
-    };
-    set_pos_dict(pos_dict);
-    return;
-  }
+  //initialize posDict with the first position in arr_location_history
+  try {
+      console.log("55555555555555555555555555555555555");
+      console.log("update_pos_array len=", arr_location_history.length);
 
-  // if there is no posDict.loc and arr_location_history has at least 2 positions, initialize posDict.loc
-  if (!pos_dict.loc && arr_location_history.length >= 2) {
-    pos_dict.loc = [];
-    pos_dict.diff_arr = [];
-  }
+      if (arr_location_history.length > 1) {
+        const initial_ts: number = arr_location_history[0]['timestamp'];
+        const final_ts: number = arr_location_history[arr_location_history.length - 1]['timestamp'];
+        {
+          // Find the minimum timestamp in arr_location_history that is less than posDict.ts.final
+          // start by looking at the last item in arr_location_history
+          // when it is less than posDict.ts.final, break and use that timestamp as the minimum
+          let minTimestamp = pos_dict.ts.final;
+          let i = arr_location_history.length - 1;
+          console.log("pos_dict.ts.final(", pos_dict.ts.final ,")");
+          for (; i >= 0; i--) {
+            const timestamp = arr_location_history[i]['timestamp'];
+            console.log(i, "(", timestamp ,"),");
+            if (timestamp <= pos_dict.ts.final) {
+              minTimestamp = timestamp;
+              console.log("break at timestamp @i=",i, ", pos_dict.ts.final(", pos_dict.ts.final,"), minTimestamp(", minTimestamp,")");
+              break;
+            }
+          }
+          // now minTimestamp is the maximum timestamp in arr_location_history that is less than or equal to posDict.ts.final
+          // and i is the index of that timestamp in arr_location_history
+          // Add all arr_location_history item diffs accordingly
+          console.log("will try to push dif after i(",i,") to ", arr_location_history.length - 1);
+          let prevLocation = arr_location_history[i];
+          console.log("prevLocation:", prevLocation);
 
-  if (arr_location_history.length > 1) {
-    const initial_ts: number = arr_location_history[0]['timestamp'];
-    const final_ts: number = arr_location_history[arr_location_history.length - 1]['timestamp'];
-
-    // if there is no posDict.ts, initialize it
-    if (!pos_dict || !pos_dict.ts) {
-      //console.log("initialized pos_dict here");
-      pos_dict = {
-        ts: {
-          initial: initial_ts,
-          final: final_ts
-        }
-      };
-    } 
-    else {
-      // if there is no initial timestamp, set it to the first timestamp in arr_location_history
-      if (!pos_dict.ts.initial) {
-        pos_dict.ts.initial = initial_ts;
-      }
-      // if there is no final timestamp, set it to the last timestamp in arr_location_history
-      if (!pos_dict.ts.final) {
-        pos_dict.ts.final = final_ts;
-      }
-      // Find the minimum timestamp in arr_location_history that is less than posDict.ts.final
-      // start by looking at the last item in arr_location_history
-      // when it is less than posDict.ts.final, break and use that timestamp as the minimum
-      let minTimestamp = pos_dict.ts.final;
-      let i = arr_location_history.length - 1;
-      for (; i >= 0; i--) {
-        const timestamp = arr_location_history[i]['timestamp'];
-        if (timestamp <= pos_dict.ts.final) {
-          minTimestamp = timestamp;
-          //console.log("break at timestamp @i=",i, ", pos_dict.ts.final(", pos_dict.ts.final,"), minTimestamp(", minTimestamp,")");
-          break;
+          for (; i < arr_location_history.length - 1; i++) {
+            console.log("push dif between i(",i,", ",i+1,")");
+            const location = arr_location_history[i + 1];
+            const diff_milisecs = location['timestamp'] - prevLocation['timestamp'];
+            console.log("----locs.push----");
+            locs.push([location.coords.latitude, location.coords.longitude, location.coords.altitude, location.coords.accuracy, location.coords.altitudeAccuracy, diff_milisecs]);
+            console.log("----calc_geodesic----");
+            const dif_last_two = await calc_geodesic(prevLocation, location, false);
+            console.log("i",i,"--dif_last_two:", dif_last_two);
+            diffs.push([dif_last_two.s_geo_len, dif_last_two.time_diff,i]);
+            console.log("----diffs.push----");
+            prevLocation = location;
+          }
+          console.log("updated ", pos_dict.ts.final," to ", arr_location_history[arr_location_history.length - 1]['timestamp']);
+          return [locs, diffs, arr_location_history[arr_location_history.length - 1]['timestamp']];
         }
       }
-      // now minTimestamp is the maximum timestamp in arr_location_history that is less than or equal to posDict.ts.final
-      // and i is the index of that timestamp in arr_location_history
-      // Add all arr_location_history item diffs accordingly
-      let prevLocation = arr_location_history[i];
-      for (; i < arr_location_history.length - 1; i++) {
-        //console.log("push dif between i(",i,", ",i+1,")");
-        const location = arr_location_history[i + 1];
-        const diff_milisecs = location['timestamp'] - prevLocation['timestamp'];
-        pos_dict.loc.push([location.coords.latitude, location.coords.longitude, location.coords.altitude, location.coords.accuracy, location.coords.altitudeAccuracy, diff_milisecs]);
-        const dif_last_two = await calc_geodesic(prevLocation, location, false);
-        pos_dict.diff_arr.push([dif_last_two.s_geo_len, dif_last_two.time_diff,i]);
-        //console.log("i",i,"--dif_last_two:", dif_last_two);
-        prevLocation = location;
-      }
-      //console.log("updated ", pos_dict.ts.final," to ", arr_location_history[arr_location_history.length - 1]['timestamp']);
-      pos_dict.ts.final = arr_location_history[arr_location_history.length - 1]['timestamp'];
-    }
-    set_pos_dict(pos_dict);
-    return;
+  }
+  catch (err) {
+    console.log("update_pos_array err:", err);
+    return [[], [], null];
   }
   return;
 };

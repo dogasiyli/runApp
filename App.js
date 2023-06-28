@@ -5,7 +5,7 @@ import { AppStateProvider } from './assets/stateContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { Screen_GPS_Debug } from './screens/screen_gps_debug';
+import { Screen_GPS_Debug } from './screens/screen_gps';
 import { Screen_MoveablePoints } from './screens/screen_movable_points';
 import { Screen_Home } from './screens/screen_home';
 import { Screen_Navigations } from './screens/screen_navigations';
