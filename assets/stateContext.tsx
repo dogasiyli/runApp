@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { INIT_PERMITS, INIT_POSITION } from '../assets/constants';
-import { PositionDict } from './types';
+import { INIT_PERMITS, INIT_POSITION, TIME_STAMPS } from '../assets/constants';
 
 export interface MoveableImageDict
 {
@@ -26,8 +25,13 @@ interface StateContextType {
 
     arr_location_history:Array<object>;
     set_location_history: React.Dispatch<React.SetStateAction<Array<object>>>;
-    position_dict:PositionDict;
-    set_position_dict: React.Dispatch<React.SetStateAction<PositionDict>>;
+
+    pos_array_kalman:Array<object>;
+    set_pos_array_kalman: React.Dispatch<React.SetStateAction<Array<object>>>;
+    pos_array_diffs:Array<object>;
+    set_pos_array_diffs: React.Dispatch<React.SetStateAction<Array<object>>>;
+    pos_array_timestamps:object;
+    set_pos_array_timestamps: React.Dispatch<React.SetStateAction<object>>;
 
     moveableImages:Array<MoveableImageDict>;
     setMoveableImages: React.Dispatch<React.SetStateAction<Array<MoveableImageDict>>>;
@@ -63,7 +67,10 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [current_location, set_current_location] = useState(INIT_POSITION);
     const [bool_record_locations, enable_record_locations] = useState(false);
     const [arr_location_history, set_location_history] = useState(new Array(INIT_POSITION));
-    const [position_dict, set_position_dict] = useState<PositionDict>({});
+    
+    const [pos_array_kalman, set_pos_array_kalman] = useState<number[][]>([]);
+    const [pos_array_diffs, set_pos_array_diffs] = useState<number[][]>([]);
+    const [pos_array_timestamps, set_pos_array_timestamps] = useState<object>(TIME_STAMPS);
 
     const [initTimestamp, setInitTimestamp] = useState(null);
     const [lastTimestamp, setLastTimestamp] = useState(null);
@@ -85,7 +92,11 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 bool_record_locations, enable_record_locations, 
                 bool_update_locations, enable_update_locations,
                 arr_location_history, set_location_history,
-                position_dict, set_position_dict,
+                
+                pos_array_kalman, set_pos_array_kalman,
+                pos_array_diffs, set_pos_array_diffs,
+                pos_array_timestamps, set_pos_array_timestamps,
+
                 moveableImages, setMoveableImages,
 
                 initTimestamp, setInitTimestamp,

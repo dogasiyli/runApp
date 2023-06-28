@@ -1,12 +1,3 @@
-export type PositionDict = {
-    ts?: {
-      initial?: number;
-      final?: number;
-    };
-    loc?: any[];
-    diff_arr?: any[];
-  };
-
 export type GeodesicResult = {
   s_geo_len: number,
   α1: number,

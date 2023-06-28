@@ -17,11 +17,11 @@ import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../asyncOperations/requests';
 import { on_new_gps_data } from '../asyncOperations/gpsOperations';
-import { handleTimerInterval, get_dist_time, initialize_post_dict } from '../asyncOperations/utils';
+import { handleTimerInterval, get_dist_time } from '../asyncOperations/utils';
 
 import { SpeedTimeInfo } from '../assets/interface_definitions';
 import { CoveredDistance } from '../assets/types';
-import { updateLocationHistory } from '../asyncOperations/asyncCalculations';
+import { updateLocationHistory, updatePosDict, updateDistances } from '../asyncOperations/asyncCalculations';
 
 
 export function Screen_GPS_Debug({route}) {
@@ -35,7 +35,11 @@ export function Screen_GPS_Debug({route}) {
           bool_location_background_started, set_location_background_started,
           current_location, set_current_location, 
           bool_record_locations, arr_location_history, 
-          position_dict, set_position_dict,
+          
+          pos_array_kalman, set_pos_array_kalman, 
+          pos_array_diffs, set_pos_array_diffs, 
+          pos_array_timestamps, set_pos_array_timestamps,
+          
           bool_update_locations, enable_update_locations,
           initTimestamp, setInitTimestamp,
           lastTimestamp, setLastTimestamp,
@@ -173,29 +177,21 @@ export function Screen_GPS_Debug({route}) {
     };
   }, [bool_record_locations, initTimestamp, lastTimestamp]);
   
-
   // useEffect appending updated location to arr_location_history
   useEffect(() => {
-    const update_async = async (pd:any) => {
-      console.log("*-+*-+set_position_dict...");
-      set_position_dict(pd);
-    };
-    const fetchData = async (pd:any) => {
+    const fetchData = async () => {
       console.log("try fetchData ", isCalculating, bool_record_locations);
-      if (!isCalculating && bool_record_locations) {
-        setIsCalculating(true);
-
-        const pos_dict = await updateLocationHistory(arr_location_history, bool_record_locations, pd, current_location, setCoveredDistance);
-        
-        await update_async(pos_dict);  
-
-        setIsCalculating(false);
+      if (bool_record_locations) {
+        await updateLocationHistory(arr_location_history, bool_record_locations, current_location);
+        await updatePosDict(arr_location_history, pos_array_kalman, pos_array_diffs, 
+                            pos_array_timestamps, set_pos_array_timestamps, current_location);
+        await updateDistances(arr_location_history, bool_record_locations, pos_array_diffs, current_location, setCoveredDistance);
       } else {
         console.log("CANCEL CALCULATING");
       }
     };
   
-    fetchData(position_dict);
+    fetchData();
   
     return () => {
       // Cleanup function
@@ -209,9 +205,9 @@ export function Screen_GPS_Debug({route}) {
     // Define an inner async function and call it immediately
     (async () => {
       if (isMounted && bool_record_locations && (display_page_mode === 'SpeedScreens' || display_page_mode === 'Debug Screen')) {
-        const x60s = await get_dist_time(position_dict, 40, "seconds", false)
-        const x30s = await get_dist_time(position_dict, 20, "seconds", false);
-        const x10s = await get_dist_time(position_dict, 5, "seconds", false);
+        const x60s = await get_dist_time(pos_array_diffs, 40, "seconds", false)
+        const x30s = await get_dist_time(pos_array_diffs, 20, "seconds", false);
+        const x10s = await get_dist_time(pos_array_diffs, 5, "seconds", false);
         setSpeedTimeInfo_1({
           s60: x60s.kmh,
           t60: x60s.time_diff,
@@ -222,9 +218,9 @@ export function Screen_GPS_Debug({route}) {
         });
       }
       if (isMounted && bool_record_locations && display_page_mode === 'SpeedScreens') {
-        const x1km = await get_dist_time(position_dict, 100, "meters", false)
-        const x500m = await get_dist_time(position_dict, 50, "meters", false);
-        const x100m = await get_dist_time(position_dict, 10, "meters", false);
+        const x1km = await get_dist_time(pos_array_diffs, 100, "meters", false)
+        const x500m = await get_dist_time(pos_array_diffs, 50, "meters", false);
+        const x100m = await get_dist_time(pos_array_diffs, 10, "meters", false);
         setSpeedTimeInfo_2({
           s60: x1km.kmh,
           t60: x1km.time_diff,

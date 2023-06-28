@@ -17,7 +17,7 @@ interface SpeedScreenProps {
 export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,sp_tim_inf_1, sp_tim_inf_2, covered_dist }) => {
     const row_tops = ["5%", "30%", "53%", "89%", "140%"];
     const { current_location, 
-        activeTime, passiveTime, totalTime, position_dict
+        activeTime, passiveTime, totalTime,
       } = useAppState();
 
   // Use the state variables from the context as needed in this component

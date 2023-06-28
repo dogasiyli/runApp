@@ -23,6 +23,10 @@ export const INIT_TIMES = {
     "gpsUpdateMS": 1000,
     "timerUpdateMS": 1000,
 }
+export const TIME_STAMPS = {
+    "initial": null,
+    "final": null,
+}
 
 export type OfflineLocationData = {locations: LocationObject[];};
 export const LOCATION_TRACKING = 'location-tracking';
