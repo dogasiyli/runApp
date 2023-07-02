@@ -2,13 +2,12 @@ import { Text, Image, TouchableHighlight, View, PanResponder, Vibration, Dimensi
 import { Switch } from 'react-native-switch';  
 import { useAppState } from '../../assets/stateContext';
 import React, { useContext, useRef, useState } from 'react';
-import Slider from '@react-native-community/slider';
 
 import { style_movable } from '../../sheets/styles';
 import { format_time_diff, calc_pace_from_kmh } from '../../asyncOperations/utils';
 
 import { ViewRCProps, CircleTextErrorProps, CircleTextColorProps, CircleTextGPSProps, CircleClickableProps,
-         CircleImagePaceProps, DisplayDataProps, MoveableImageProps } from '../../assets/interface_definitions';
+         CircleImagePaceProps, DisplayDataProps, MoveableImageProps, ToggleImageProps } from '../../assets/interface_definitions';
 import { getReadableDuration } from '../../asyncOperations/fileOperations';
 
 const button_images = {
@@ -23,6 +22,12 @@ const run_images = {
   "run_slow": require('../../assets/pngs/run_slow.png'),
   "run_fast": require('../../assets/pngs/run_fast.png'),
   "cycling": require('../../assets/pngs/cycling.png'),
+}
+const speed_screen_images = {
+  "time": require('../../assets/pngs/time.png'),
+  "dist": require('../../assets/pngs/dist.png'),
+  "best": require('../../assets/pngs/best.png'),
+  "last": require('../../assets/pngs/last.png'),
 }
 const run_image_ident = {
   "run00": "standing",
@@ -68,6 +73,8 @@ const selectRunImage = (pace: number) => {
 
   return run_images[run_image_ident[imageName]];
 };
+
+
 
 
 const toggle = (setFunction) => setFunction(previousState => !previousState);  
@@ -210,33 +217,19 @@ export const Circle_Text_Error: React.FC<CircleTextErrorProps> = ({ renderBool, 
   );
 };
 
-export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({ renderBool, dispVal, circleSize=0.22, beforeText='', afterText='', floatVal=-1, top, left, backgroundColor }) => {
+export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({ 
+  renderBool, dispVal, 
+  circleSize=0.22, 
+  beforeText='', afterText='', 
+  floatVal=-1, 
+  top, left, 
+  backgroundColor }) => {
   if (!renderBool) {
     return null;
   }
 
   const { width } = Dimensions.get('window');
-  if ((circleSize==0 || circleSize>1000) && floatVal==circleSize)
-  {
-    //here circleSize is expected to be the time in miliseconds - hence:
-    circleSize = 0.12;
-    circleSize += floatVal>=60*1000 ? 0.01 : 0.0;//additional 0.01 for seconds to minutes
-    circleSize += floatVal>=10*60*1000 ? 0.01 : 0.0;//additional 0.02 for more than 10 minutes
-    circleSize += floatVal>=60*60*1000 ? 0.01 : 0.0;//additional 0.1 for minutes to hours
-    circleSize += floatVal>=10*60*60*1000 ? 0.02 : 0.0;//additional 0.1 for more than 10hours
-  }
-  if (typeof top === 'number')
-  {
-    top = 8 + top*circleSize*45;
-    top = `${top}%`
-  }
-  if (typeof left === 'number')
-  {
-    left = 52 + left*circleSize*50;
-    left = `${left}%`
-  }
   const circleW = width * circleSize; // Adjust the percentage as needed
-
 
   return (
     <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
@@ -245,7 +238,7 @@ export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({ renderBool, 
           disabled={false}
           style={{ backgroundColor:backgroundColor, width: circleW, height: circleW, textAlign: 'center', 
                    lineHeight: circleW, borderRadius: circleW / 2,
-                   top:0, marginBottom:10}}
+                   top:0, marginBottom:20}}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -429,6 +422,51 @@ export const BT_Circle_Clickable: React.FC<CircleClickableProps> = ({ renderBool
             ellipsizeMode="tail"
           >
             {page_name}
+          </Text>
+        </View>
+      </TouchableHighlight>
+    </View>
+  );
+};
+
+export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({ 
+  renderBool, 
+  top, left, size,
+  bool_val, set_bool_val, 
+  true_img, false_img }) => {
+  if (!renderBool) {
+    return null;
+  }
+  const { width } = Dimensions.get('window');
+  const circleSize = width * size; // Adjust the percentage as needed
+  const bgc = 'transparent';
+  const s = bool_val ? true_img : false_img;
+  const imageSource = bool_val ? speed_screen_images[true_img] : speed_screen_images[false_img];
+  return (
+    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+      <TouchableHighlight underlayColor="transparent" 
+                          onLongPress={() => toggle(set_bool_val)}>
+      <View style={{ borderRadius: circleSize / 3, overflow: 'hidden', alignSelf:"center", alignItems:"center" }}>
+        <Image
+          source={imageSource}
+          style={{
+            backgroundColor: bgc,
+            width: circleSize,
+            height: circleSize,
+            borderRadius: circleSize / 4,
+            top: 0,
+            marginBottom: 0,
+          }}
+        /> 
+          <Text
+            disabled={false}
+            style={{ backgroundColor:bgc, width: circleSize/3, height: circleSize/3, 
+                     textAlign: 'center', lineHeight: circleSize/3, color:"yellow", fontSize:circleSize/6,
+                     borderRadius: circleSize / 4 }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {s}
           </Text>
         </View>
       </TouchableHighlight>

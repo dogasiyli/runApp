@@ -1,3 +1,4 @@
+import { SpeedTimeCalced_Dict } from "./types";
 export interface TimestampDiffInfoProps {
     Formatted_Time_Diff: string;
     Diff_In_Seconds: number;
@@ -13,6 +14,16 @@ export interface CircleTextGPSProps {
   renderBool: boolean;
   top:string;
   left:string;
+}
+export interface ToggleImageProps {
+  renderBool: boolean;
+  top:string; 
+  left:string;
+  size:number;
+  bool_val:boolean;
+  set_bool_val:any;
+  true_img:string;
+  false_img:string;
 }
 export interface CircleClickableProps {
   renderBool: boolean;
@@ -65,9 +76,50 @@ export interface CircleTextColorProps {
     left: string;
   }
 
+  export interface CircleImagePaceV1Props {
+    renderBool: boolean;
+    stDict:SpeedTimeCalced_Dict,
+    value:number,
+    time_dist:string,
+    last_or_best:string,
+    beforeText?: string;
+    afterText?: string;
+    top: string;
+    left: string;
+  }
 
 
 export interface MoveableImageProps {
   id:number;
   renderBool: boolean;
+}
+
+export interface CircleTimerTriangleProps {
+  renderBool: boolean;
+  totalTime: number;
+  activeTime: number;
+  passiveTime: number;
+  top: number;
+  left: number;
+}
+
+export interface CoveredDistanceProps {
+  renderBool: boolean;
+  covered_dist:any;
+  dist_type_totalT_lastF:boolean;
+  set_dist_type:any;
+  top:string; 
+  left:string;
+}
+
+export interface PickedPaceProps {
+  renderBool: boolean;
+  covered_dist:any;
+  stDict:any;
+  dist_type_totalT_lastF:boolean;
+  activeTime:number;
+  pace_type_aveT_curF:boolean;
+  set_pace_type_aveT_curF:any;
+  top:string; 
+  left:string;
 }

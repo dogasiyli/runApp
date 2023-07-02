@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { BT_Circle_Text_GPS, Circle_Text_Error, Circle_Text_Color, Circle_Image_Pace } from '../functions/display/buttons';
+import { BT_Circle_Text_GPS, Circle_Text_Error, BT_Toggle_Image } from '../functions/display/buttons';
+import { Circle_Image_Pace_v1, Circle_Timer_Triangle, Circle_Covered_Distance, Circle_Pace_Picked } from '../functions/display/buttons_special';
 import { useAppState } from '../assets/stateContext';    
-import { getFormattedDateTime, getReadableDuration } from '../asyncOperations/fileOperations';
+import { getFormattedDateTime } from '../asyncOperations/fileOperations';
 import { CoveredDistance, SpeedTimeCalced_Dict, stDict_hasKey} from '../assets/types';
 import { CALC_DISTANCES_FIXED, CALC_TIMES_FIXED } from '../assets/constants';
 
@@ -14,7 +15,7 @@ interface SpeedScreenProps {
 }
 
 export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered_dist }) => {
-    const row_tops = ["5%", "1%", "18%", "89%", "140%"];
+    const row_tops = ["5%", "1%", "70%", "110%", "140%"];
     const { current_location, 
         activeTime, passiveTime, totalTime,
       } = useAppState();
@@ -24,8 +25,10 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
     //const covered_dist_distance_all = covered_dist_distance_last;
 
   // Use the state variables from the context as needed in this component
-  const last_or_best_dist = "last";
-  const last_or_best_time = "last";
+  const [bool_timeF_distT, set_bool_td] = useState(false);
+  const [bool_lastF_bestT, set_bool_lb] = useState(false);
+  const [dist_type_totalT_lastF, set_dist_type_totalT_lastF] = useState(true);
+  const [pace_type_aveT_curF, set_pace_type_aveT_curF] = useState(true);
 
   return (
     <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
@@ -40,115 +43,46 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
                        tresholds={[2, 4, 6]} top={row_tops[0]} left="20%"
                        afterText='' beforeText=''/>                     
     {/*--------ROW 0-COL 2/3----------*/}
-    {/*total time*/}
-    <Circle_Text_Color renderBool={true} 
-                       dispVal={getReadableDuration(totalTime)}
-                       floatVal={Math.max(totalTime,activeTime,passiveTime)}
-                       circleSize={Math.max(totalTime,activeTime,passiveTime)}
-                       backgroundColor="rgb(200,200,200)" top={-1} left={-1}
-                       afterText='' beforeText=''/>
-    {/*active time*/}
-    <Circle_Text_Color renderBool={true}
-                        dispVal={getReadableDuration(activeTime)}
-                        floatVal={Math.max(totalTime,activeTime,passiveTime)}
-                        circleSize={Math.max(totalTime,activeTime,passiveTime)}
-                        backgroundColor="rgb(0,100,0)" top={-1} left={1}
-                        afterText='' beforeText=''/>
-    {/*passive time*/}
-    <Circle_Text_Color renderBool={true}
-                        dispVal={getReadableDuration(passiveTime)}
-                        floatVal={Math.max(totalTime,activeTime,passiveTime)}
-                        circleSize={Math.max(totalTime,activeTime,passiveTime)}
-                        backgroundColor="#505050" top={1} left={0}
-                        afterText='' beforeText=''/>
+    <Circle_Timer_Triangle renderBool={true}
+                           top={40} left={10}
+                            activeTime={activeTime} passiveTime={passiveTime} totalTime={totalTime}
+                            />
+    <Circle_Covered_Distance renderBool={true} covered_dist={covered_dist}
+                      dist_type_totalT_lastF={dist_type_totalT_lastF} set_dist_type={set_dist_type_totalT_lastF}
+                      top="38%" left="45%"/>    
 
-    {/*--------ROW 3----------*/}
-    {/*total distance*/}
-    <Circle_Text_Color renderBool={true} 
-                       dispVal={covered_dist.distance_all.toFixed(0) + "m"}
-                       floatVal={11}
-                       circleSize={0.10 + 0.012*Math.floor(Math.log10(covered_dist.distance_all+0.001))}
-                       backgroundColor="rgb(0,100,200)" top={row_tops[1]} left="80%"
-                       afterText='' beforeText=''/>
-    {/*to start point distance*/}
-    <Circle_Text_Color renderBool={true}
-                        dispVal={covered_dist.distance_last.toFixed(0) + "m"}
-                        floatVal={6}
-                        circleSize={0.10 + 0.012*Math.floor(Math.log10(covered_dist.distance_last+0.001))}
-                        backgroundColor="rgb(0,100,100)" top={row_tops[2]} left="80%"
-                        afterText='' beforeText=''/>
+    <Circle_Pace_Picked renderBool={true}
+                        covered_dist={covered_dist} stDict={stDict}
+                        dist_type_totalT_lastF={dist_type_totalT_lastF}
+                        activeTime={activeTime}
+                        pace_type_aveT_curF={pace_type_aveT_curF} set_pace_type_aveT_curF={set_pace_type_aveT_curF}
+                        top="27%" left="70%"/> 
 
 
+    <BT_Toggle_Image renderBool={true} 
+                     top={row_tops[2]} left="20%" size={0.25}
+                     bool_val={bool_lastF_bestT} set_bool_val={set_bool_lb} 
+                     true_img='best' false_img='last'/>
+    <BT_Toggle_Image renderBool={true} 
+                     top={row_tops[2]} left="60%" size={0.25}
+                     bool_val={bool_timeF_distT} set_bool_val={set_bool_td} 
+                     true_img='dist' false_img='time'/>
 
-    <Text style={{backgroundColor:"transparent", top:"35%", marginBottom:-50, textAlign: 'center', color:"black", fontSize:30} }>
-        ----------------------------------------------
-    </Text>
-    <Text style={{top:"40%", marginBottom:"5%", textAlign: 'center', color:"white", fontSize:20} }>
-        TIME(40s, 20s, 5s)
-    </Text>
+
     {/*--------ROW 4----------*/}
-    <Circle_Image_Pace renderBool={stDict !== undefined} 
-                       speed_kmh={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[0].toFixed(0)}s`) ? (
-                                  last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].last_speed
-                                                               : stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].best_speed) : 0
-                                  } 
-                       time_diff={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[0].toFixed(0)}s`) ? (
-                                  last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].last_time
-                                                               : stDict[`${CALC_TIMES_FIXED[0].toFixed(0)}s`].best_time) : 0
-                                  } 
-                       top={row_tops[3]} left="5%" beforeText={'seconds'}/>
-    <Circle_Image_Pace renderBool={stDict !== undefined} 
-                       speed_kmh={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[1].toFixed(0)}s`) ? (
-                        last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].last_speed
-                                                     : stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].best_speed) : 0
-                        } 
-                        time_diff={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[1].toFixed(0)}s`) ? (
-                        last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].last_time
-                                                     : stDict[`${CALC_TIMES_FIXED[1].toFixed(0)}s`].best_time) : 0
-                        } 
-                        top={row_tops[3]} left="40%" beforeText={'seconds'}/>
-    <Circle_Image_Pace renderBool={stDict !== undefined} 
-                       speed_kmh={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[2].toFixed(0)}s`) ? (
-                        last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[2].toFixed(0)}s`].last_speed
-                                                     : stDict[`${CALC_TIMES_FIXED[2].toFixed(0)}s`].best_speed) : 0
-                        } 
-                        time_diff={stDict_hasKey(stDict, `${CALC_TIMES_FIXED[2].toFixed(0)}s`) ? (
-                        last_or_best_time === "last" ? stDict[`${CALC_TIMES_FIXED[2].toFixed(0)}s`].last_time
-                                                     : stDict[`${CALC_TIMES_FIXED[2].toFixed(0)}s`].best_time) : 0
-                        } 
-                       top={row_tops[3]} left="75%" beforeText={'seconds'}/>
+    <Circle_Image_Pace_v1 renderBool={stDict !== undefined}
+                      stDict={stDict} value={bool_timeF_distT ? CALC_DISTANCES_FIXED[0] : CALC_TIMES_FIXED[0]}
+                      time_dist={bool_timeF_distT ? 'dist' : 'time'} last_or_best = {bool_lastF_bestT ? 'best' : 'last'}
+                      top={row_tops[3]} left="5%" beforeText={bool_timeF_distT ? 'meters' : 'seconds'}/>
+    <Circle_Image_Pace_v1 renderBool={stDict !== undefined}
+                      stDict={stDict} value={bool_timeF_distT ? CALC_DISTANCES_FIXED[1] : CALC_TIMES_FIXED[1]}
+                      time_dist={bool_timeF_distT ? 'dist' : 'time'} last_or_best = {bool_lastF_bestT ? 'best' : 'last'}
+                      top={row_tops[3]} left="40%" beforeText={bool_timeF_distT ? 'meters' : 'seconds'}/>
+    <Circle_Image_Pace_v1 renderBool={stDict !== undefined}
+                          stDict={stDict} value={bool_timeF_distT ? CALC_DISTANCES_FIXED[2] : CALC_TIMES_FIXED[2]}
+                          time_dist={bool_timeF_distT ? 'dist' : 'time'} last_or_best = {bool_lastF_bestT ? 'best' : 'last'}
+                          top={row_tops[3]} left="75%" beforeText={bool_timeF_distT ? 'meters' : 'seconds'}/>
 
-    <Text style={{backgroundColor:"transparent", top:"59%", marginBottom:"-12%", textAlign: 'center', color:"black", fontSize:30} }>
-        ----------------------------------------------
-    </Text>
-    <Text style={{top:"63%", bottom:0, textAlign: 'center', color:"white", fontSize:20} }>
-        DIST(1km, 500m, 100m)
-    </Text>
-    {/*--------ROW 5----------*/}
-    <Circle_Image_Pace renderBool={stDict !== undefined} 
-                        speed_kmh={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[0].toFixed(0)}m`) ? (
-                        last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}m`].last_speed
-                                                     : stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}m`].best_speed) : 0} 
-                        time_diff={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[0].toFixed(0)}m`) ? (
-                        last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}m`].last_time
-                                                     : stDict[`${CALC_DISTANCES_FIXED[0].toFixed(0)}m`].best_time) : 0} 
-                       top={row_tops[4]} left="5%" beforeText={'meters'}/>
-    <Circle_Image_Pace renderBool={stDict !== undefined} 
-                       speed_kmh={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[1].toFixed(0)}m`) ? (
-                        last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[1].toFixed(0)}m`].last_speed
-                                                     : stDict[`${CALC_DISTANCES_FIXED[1].toFixed(0)}m`].best_speed) : 0} 
-                        time_diff={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[1].toFixed(0)}m`) ? (
-                        last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[1].toFixed(0)}m`].last_time
-                                                     : stDict[`${CALC_DISTANCES_FIXED[1].toFixed(0)}m`].best_time) : 0} 
-                       top={row_tops[4]} left="40%" beforeText={'meters'}/>
-    <Circle_Image_Pace renderBool={stDict !== undefined} 
-                       speed_kmh={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[2].toFixed(0)}m`) ? (
-                        last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[2].toFixed(0)}m`].last_speed
-                                                     : stDict[`${CALC_DISTANCES_FIXED[2].toFixed(0)}m`].best_speed) : 0} 
-                        time_diff={stDict_hasKey(stDict, `${CALC_DISTANCES_FIXED[2].toFixed(0)}m`) ? (
-                        last_or_best_dist === "last" ? stDict[`${CALC_DISTANCES_FIXED[2].toFixed(0)}m`].last_time
-                                                     : stDict[`${CALC_DISTANCES_FIXED[2].toFixed(0)}m`].best_time) : 0} 
-                       top={row_tops[4]} left="75%" beforeText={'meters'}/>
 
     </View>
   );
