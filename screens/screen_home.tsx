@@ -13,6 +13,7 @@ export function Screen_Home({navigation}) {
       <BT_Circle_Clickable renderBool={true} top="10%" left="40%" size_perc={0.25} nav={navigation} page_name="Moving Pts" page_navigate_str="Moveable_Points" />
       <BT_Circle_Clickable renderBool={true} top="10%" left="70%" size_perc={0.25} nav={navigation} page_name="Screen Stack" page_navigate_str="Screen_Navigation" />
       <BT_Circle_Clickable renderBool={true} top="40%" left="10%" size_perc={0.25} nav={navigation} page_name="Speeds" page_navigate_str="GPS_Debug" display_page_mode="SpeedScreens"  />
+      <BT_Circle_Clickable renderBool={true} top="40%" left="40%" size_perc={0.25} nav={navigation} page_name="Maps" page_navigate_str="GPS_Debug" display_page_mode="MapScreen"  />
     </View>
     </>
   );
