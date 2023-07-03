@@ -10,6 +10,7 @@ import { getFormattedDateTime } from '../asyncOperations/fileOperations';
 
 import { DebugScreen } from './screen_gps_dbg';
 import { SpeedScreen } from './screen_gps_speeds';
+import { MapScreen } from './screen_gps_maps'
 
 import { useAppState } from '../assets/stateContext';
 
@@ -247,6 +248,8 @@ export function Screen_GPS_Debug({route}) {
       content = <DebugScreen insets={insets} stDict={stDict} screenText={screenText}/>;
     } else if (display_page_mode === 'SpeedScreens') {
       content = <SpeedScreen insets={insets} stDict={stDict} covered_dist={coveredDistance}/>;
+    }else if (display_page_mode === 'MapScreen') {
+      content = <MapScreen insets={insets}/>;
     }
     return (
       <>

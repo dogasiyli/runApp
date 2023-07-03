@@ -26,6 +26,11 @@
         "android.permission.INTERNET",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
+      "config" :{
+        "googleMaps": {
+          "apiKey": "AIzaSyB0a_1ozE9axMeN9DJxmJeCvKbvTKPJTsQ"
+        }
+      },
       "package": "com.doga.siyli.runApp",
       "versionCode": 2
     },

@@ -7,6 +7,21 @@ export type GeodesicResult = {
   time_diff: number,
 }
 
+export type GPS_Data = {
+  "coords": 
+  {
+      "accuracy": number, 
+      "altitude": number, 
+      "altitudeAccuracy": number, 
+      "heading": number, 
+      "latitude": number, 
+      "longitude": number, 
+      "speed": number
+  }, 
+  "mocked"?: boolean, 
+  "timestamp": number
+}
+
 export type CoveredDistance = {
   distance_all: number,
   distance_last: number,

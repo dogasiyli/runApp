@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { INIT_PERMITS, INIT_POSITION, TIME_STAMPS } from '../assets/constants';
+import { GPS_Data } from '../assets/types';
 
 export interface MoveableImageDict
 {
@@ -11,8 +12,8 @@ interface StateContextType {
     permits:object;
     set_permits: React.Dispatch<React.SetStateAction<object>>;
 
-    current_location: object;
-    set_current_location: React.Dispatch<React.SetStateAction<object>>;
+    current_location: GPS_Data;
+    set_current_location: React.Dispatch<React.SetStateAction<GPS_Data>>;
 
     bool_record_locations:boolean;
     enable_record_locations: React.Dispatch<React.SetStateAction<boolean>>;

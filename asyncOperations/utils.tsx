@@ -103,7 +103,15 @@ export const calc_geodesic = async (p1: any, p2: any, verbose: boolean = false):
       φ2 = toRadians(p2.coords.latitude);
       λ1 = toRadians(p1.coords.longitude);
       λ2 = toRadians(p2.coords.longitude);
-    } else {
+    }
+    else if (p1 && p2 && p1.lat !== undefined && p1.lon !== undefined && p2.lat !== undefined && p2.lon !== undefined) {
+      time_diff =0;
+      φ1 = toRadians(p1.lat);
+      φ2 = toRadians(p2.lat);
+      λ1 = toRadians(p1.lon);
+      λ2 = toRadians(p2.lon);
+    }
+    else {
       console.log("p1 is not of type LocationObject", "p1:", p1);
       return null;
     }
