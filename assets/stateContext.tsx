@@ -47,6 +47,9 @@ interface StateContextType {
     setPassiveTime: React.Dispatch<React.SetStateAction<number>>;
     totalTime: number;
     setTotalTime: React.Dispatch<React.SetStateAction<number>>;
+
+    runState: string;
+    setRunState: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const StateContext = createContext<StateContextType | undefined>(undefined);
@@ -79,6 +82,8 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [passiveTime, setPassiveTime] = useState(0);
     const [totalTime, setTotalTime] = useState(0);
 
+    const [runState, setRunState] = useState('initial');
+
     var [moveableImages, setMoveableImages] = useState([
       {positionX: 75,positionY: 250,selected: false,},
       {positionX: 275,positionY: 250,selected: false,},
@@ -105,6 +110,8 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 activeTime, setActiveTime,
                 passiveTime, setPassiveTime,
                 totalTime, setTotalTime,
+
+                runState, setRunState,
             }}
     >
       {children}

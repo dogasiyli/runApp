@@ -34,7 +34,7 @@ export function Screen_GPS_Debug({route}) {
   const { set_permits, 
           bool_location_background_started, set_location_background_started,
           current_location, set_current_location, 
-          bool_record_locations, arr_location_history, 
+          bool_record_locations, enable_record_locations, arr_location_history, 
           
           pos_array_kalman, set_pos_array_kalman, 
           pos_array_diffs, set_pos_array_diffs, 
@@ -44,6 +44,8 @@ export function Screen_GPS_Debug({route}) {
           initTimestamp, setInitTimestamp,
           lastTimestamp, setLastTimestamp,
           setActiveTime, setPassiveTime, setTotalTime,
+
+          runState,
         } = useAppState();
   const prevBoolRecordLocations = useRef(bool_record_locations);
   const prevBoolUpdateLocations = useRef(bool_update_locations);      
@@ -226,6 +228,19 @@ export function Screen_GPS_Debug({route}) {
     };    
 }, [current_location]);
 
+  // useEffect appending updated location to arr_location_history
+  useEffect(() => {
+    //console.log("runState:",runState)
+    if (runState==="paused" || runState==="stopped")
+    { 
+      enable_record_locations(false);
+    }
+    if (runState==="running")
+    { 
+      enable_update_locations(true);
+      enable_record_locations(true);
+    }
+  }, [runState]);
 
     let content = null;
     if (display_page_mode === 'Debug Screen') {

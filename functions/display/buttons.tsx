@@ -28,6 +28,14 @@ const speed_screen_images = {
   "dist": require('../../assets/pngs/dist.png'),
   "best": require('../../assets/pngs/best.png'),
   "last": require('../../assets/pngs/last.png'),
+  "gps" : require('../../assets/pngs/gps.png'),
+  "no-gps": require('../../assets/pngs/no-gps.png'),
+  "camera": require('../../assets/pngs/camera.png'),
+  "run": require('../../assets/pngs/run.png'),
+  "pause": require('../../assets/pngs/pause.png'),
+  "finish": require('../../assets/pngs/finish.png'),
+  "share": require('../../assets/pngs/share.png'),
+  "stats": require('../../assets/pngs/stats.png'),
 }
 const run_image_ident = {
   "run00": "standing",
@@ -73,9 +81,6 @@ const selectRunImage = (pace: number) => {
 
   return run_images[run_image_ident[imageName]];
 };
-
-
-
 
 const toggle = (setFunction) => setFunction(previousState => !previousState);  
 //https://github.com/shahen94/react-native-switch
@@ -179,13 +184,18 @@ export const BT_Circle_Text_GPS: React.FC<CircleTextGPSProps> = ({ renderBool, t
   );
 };
 
-export const Circle_Text_Error: React.FC<CircleTextErrorProps> = ({ renderBool, dispVal, beforeText='', afterText='', floatVal, top, left, tresholds }) => {
+export const Circle_Text_Error: React.FC<CircleTextErrorProps> = ({ 
+  renderBool, dispVal, 
+  beforeText='', afterText='', 
+  floatVal, 
+  size=0.22,
+  top, left, tresholds }) => {
   if (!renderBool) {
     return null;
   }
 
   const { width } = Dimensions.get('window');
-  const circleSize = width * 0.22; // Adjust the percentage as needed
+  const circleSize = width * size; // Adjust the percentage as needed
 
   const T = tresholds; // Thresholds array
 
@@ -223,6 +233,7 @@ export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({
   beforeText='', afterText='', 
   floatVal=-1, 
   top, left, 
+  textColor="black",
   backgroundColor }) => {
   if (!renderBool) {
     return null;
@@ -237,14 +248,14 @@ export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({
         <Text
           disabled={false}
           style={{ backgroundColor:backgroundColor, width: circleW, height: circleW, textAlign: 'center', 
-                   lineHeight: circleW, borderRadius: circleW / 2,
+                   lineHeight: circleW, borderRadius: circleW / 2, color:textColor,
                    top:0, marginBottom:20}}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
              {beforeText} {typeof dispVal === 'string' ? dispVal : ''} 
         </Text>
-        <Text style={{bottom:circleW/2, textAlign: 'center'} }>
+        <Text style={{bottom:circleW/2, textAlign: 'center', color:textColor} }>
           {typeof dispVal === 'number' ? dispVal.toFixed(3) : ''} 
           {afterText}
         </Text>
@@ -339,6 +350,7 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
   time_diff,
   beforeText = '',
   afterText = '',
+  size = 0.15,
   top,
   left,
 }) => {
@@ -347,7 +359,7 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
   }
 
   const { width } = Dimensions.get('window');
-  const circleSize = width * 0.22; // Adjust the percentage as needed
+  const circleSize = width * size; // Adjust the percentage as needed
 
   const backgroundColor = calculatePaceRGB(speed_kmh);
   const imageSource = selectRunImage(speed_kmh);
@@ -433,20 +445,28 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
   renderBool, 
   top, left, size,
   bool_val, set_bool_val, 
-  true_img, false_img }) => {
+  true_img, false_img,
+  toggle_func=undefined, toggle_val=undefined,
+  press_type="long", underlayColor="transparent",
+  belowText=undefined
+  }) => {
   if (!renderBool) {
     return null;
   }
   const { width } = Dimensions.get('window');
   const circleSize = width * size; // Adjust the percentage as needed
   const bgc = 'transparent';
-  const s = bool_val ? true_img : false_img;
+  const s = belowText===undefined ? (bool_val ? true_img : false_img) : belowText;
   const imageSource = bool_val ? speed_screen_images[true_img] : speed_screen_images[false_img];
+  toggle_val = toggle_val===undefined ? set_bool_val : toggle_val;
+  toggle_func = toggle_func===undefined ? toggle : toggle_func;
+
   return (
     <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
-      <TouchableHighlight underlayColor="transparent" 
-                          onLongPress={() => toggle(set_bool_val)}>
-      <View style={{ borderRadius: circleSize / 3, overflow: 'hidden', alignSelf:"center", alignItems:"center" }}>
+      <TouchableHighlight underlayColor={"transparent"} 
+                          onPress={press_type === "short" || press_type === "both" ? () => toggle_func(toggle_val) : undefined}
+                          onLongPress={press_type === "long" || press_type === "both" ? () => toggle_func(toggle_val) : undefined}>
+      <View style={{backgroundColor:underlayColor, borderRadius: circleSize / 2, overflow: 'hidden', alignSelf:"center", alignItems:"center" }}>
         <Image
           source={imageSource}
           style={{
@@ -458,18 +478,20 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
             marginBottom: 0,
           }}
         /> 
+      </View>
+      </TouchableHighlight>
+      <View style={{backgroundColor:"transparent", borderRadius: circleSize / 2, overflow: 'hidden', alignSelf:"center", alignItems:"center" }}>
           <Text
             disabled={false}
-            style={{ backgroundColor:bgc, width: circleSize/3, height: circleSize/3, 
-                     textAlign: 'center', lineHeight: circleSize/3, color:"yellow", fontSize:circleSize/6,
+            style={{ backgroundColor:bgc, width: circleSize, height: circleSize, 
+                     textAlign: 'center', lineHeight: circleSize/2, color:"yellow", fontSize:circleSize/6,
                      borderRadius: circleSize / 4 }}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {s}
+            {s.toUpperCase()}
           </Text>
         </View>
-      </TouchableHighlight>
     </View>
   );
 };

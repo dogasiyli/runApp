@@ -24,6 +24,11 @@ export interface ToggleImageProps {
   set_bool_val:any;
   true_img:string;
   false_img:string;
+  press_type?:string;
+  underlayColor?:string;
+  toggle_func?:any;
+  toggle_val?:any;
+  belowText?:string;
 }
 export interface CircleClickableProps {
   renderBool: boolean;
@@ -52,6 +57,7 @@ export interface CircleTextErrorProps {
   tresholds: Array<number>;
   top:string;
   left:string;
+  size?:number;
 }
 
 export interface CircleTextColorProps {
@@ -64,6 +70,8 @@ export interface CircleTextColorProps {
     top:string|number;
     left:string|number;
     circleSize?: number;
+    textColor?: string;
+    size?:number;
   }
 
   export interface CircleImagePaceProps {
@@ -74,6 +82,7 @@ export interface CircleTextColorProps {
     afterText?: string;
     top: string;
     left: string;
+    size?:number;
   }
 
   export interface CircleImagePaceV1Props {
@@ -86,6 +95,7 @@ export interface CircleTextColorProps {
     afterText?: string;
     top: string;
     left: string;
+    size?:number;
   }
 
 

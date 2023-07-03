@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableHighlight, View } from 'react-native';
 import { CircleImagePaceV1Props, CircleTimerTriangleProps, CoveredDistanceProps, PickedPaceProps } from '../../assets/interface_definitions';
-import { Circle_Image_Pace, Circle_Text_Color } from '../display/buttons';
+import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image } from '../display/buttons';
 
 import { stDict_hasKey } from '../../assets/types';
 import { getReadableDuration } from '../../asyncOperations/fileOperations';
@@ -18,6 +18,7 @@ export const Circle_Image_Pace_v1: React.FC<CircleImagePaceV1Props> = ({
   last_or_best,
   top, left,
   beforeText,
+  size,
 }) => {
     if (stDict === undefined)
         return;
@@ -36,6 +37,7 @@ export const Circle_Image_Pace_v1: React.FC<CircleImagePaceV1Props> = ({
       top={top}
       left={left}
       beforeText={beforeText}
+      size={size}
     />
   );
 };
@@ -187,4 +189,111 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
         </View>
     );
 };
+
+interface ControlsSpeedScreenProps {
+    renderBool: boolean;
+    bool_update_locations:boolean;
+    enable_update_locations: React.Dispatch<React.SetStateAction<boolean>>;
+    current_location: object;
+    runState: string;
+    setRunState: React.Dispatch<React.SetStateAction<string>>;
+    top: number;
+};
+export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
+    renderBool,
+    bool_update_locations, enable_update_locations,
+    current_location, 
+    runState, setRunState,
+    top,
+  }) => {
+    if (!renderBool)
+        return;
+
+    const sizes = [0.15, 0.20, 0.25];
+    const lefts = [3, 35, 70];
+    const top_adds=[7, 4, 0];
+    const left_adds=[7, 4, 0];
+    const pick_size = 0;
+    const pick_left = 0;
+
+    //console.log("current_location:", current_location)
+
+    const leftD = {"gps":2,"camera":0,"run":1,"finish":2,"share":2,"stats":1,};
+    const sizeD = {"gps":1,"camera":runState === "stopped" ? 2: 1,"run":2,"finish":1,"share":1,"stats":1,};
+
+    const gps_color = bool_update_locations ? (current_location["coords"]["accuracy"]>10 ? "orange" : "cyan") : "red";
+    const run_color = (runState === "initial" || runState === "paused") ? "cyan" : (runState === "running" ? "yellow" : "pink");
+    const run_below_text = runState === "paused" ? "GO ON" : (runState === "running" ? "REST" : undefined);
+
+
+    const underlayColor = {"gps":gps_color,
+                           "camera":"transparent",
+                           "run":run_color,
+                           "finish":"red",
+                           "share":"transparent",
+                           "stats":"transparent",};
+    
+    const new_run_state = (runState === "initial" || runState === "paused") ? "running" : (runState === "running" ? "paused" : runState);
+
+    const last_item = (runState === "initial" || runState === "running") ? "gps" : (runState === "paused" ? "finish" : "share");
+
+    //console.log("last_item:",last_item)
+    if (runState=="initial" || runState=="running" || runState=="paused")
+        return (
+            <>
+            <BT_Toggle_Image renderBool={true} 
+                top={(top+top_adds[sizeD["camera"]]).toFixed(1)+'%'} 
+                left={(lefts[leftD["camera"]]+left_adds[sizeD["camera"]]).toFixed(1)+'%'} 
+                size={sizes[sizeD["camera"]]}
+                bool_val={true} set_bool_val={undefined} underlayColor={underlayColor["camera"]}
+                true_img='camera' false_img='camera' press_type="none"/>
+            <BT_Toggle_Image renderBool={true} 
+                top={(top+top_adds[sizeD["run"]]).toFixed(1)+'%'} 
+                left={(lefts[leftD["run"]]+left_adds[sizeD["run"]]).toFixed(1)+'%'} 
+                size={sizes[sizeD["run"]]}
+                bool_val={runState=="initial" || runState=="paused"} set_bool_val={undefined}  underlayColor={underlayColor["run"]}
+                toggle_func={setRunState} toggle_val={new_run_state}
+                belowText={run_below_text}
+                true_img='run' false_img='pause' press_type="short"/>
+            <BT_Toggle_Image renderBool={true} 
+                top={(top+top_adds[sizeD[last_item]]).toFixed(1)+'%'} 
+                left={(lefts[leftD[last_item]]+left_adds[sizeD[last_item]]).toFixed(1)+'%'} 
+                size={sizes[sizeD[last_item]]}
+
+                bool_val={runState=="paused" ? true : bool_update_locations} 
+                set_bool_val={runState=="paused" ? undefined : enable_update_locations} 
+
+                toggle_func={runState=="paused" ? setRunState : undefined} 
+                toggle_val={runState=="paused" ? "finish" : undefined}
+
+                underlayColor={underlayColor[last_item]}
+                true_img={runState=="paused" ? 'finish' : 'gps'} false_img={runState=="paused" ? 'finish' : 'gps'} 
+                press_type="short"/>
+            </>
+        );
+    if (runState=="finish")
+        return (
+            <>
+            <BT_Toggle_Image renderBool={true} 
+                top={(top+top_adds[sizeD["camera"]]).toFixed(1)+'%'} 
+                left={(lefts[leftD["camera"]]+left_adds[sizeD["camera"]]).toFixed(1)+'%'} 
+                size={sizes[sizeD["camera"]]}
+                bool_val={true} set_bool_val={undefined} underlayColor={underlayColor["camera"]}
+                true_img='camera' false_img='camera' press_type="none"/>
+            <BT_Toggle_Image renderBool={true} 
+                top={(top+top_adds[sizeD["stats"]]).toFixed(1)+'%'} 
+                left={(lefts[leftD["stats"]]+left_adds[sizeD["stats"]]).toFixed(1)+'%'} 
+                size={sizes[sizeD["stats"]]}
+                bool_val={true} set_bool_val={undefined}  underlayColor={underlayColor["stats"]}
+                true_img='stats' false_img='stats' press_type="none"/>
+            <BT_Toggle_Image renderBool={true} 
+                top={(top+top_adds[sizeD[last_item]]).toFixed(1)+'%'} 
+                left={(lefts[leftD[last_item]]+left_adds[sizeD[last_item]]).toFixed(1)+'%'} 
+                size={sizes[sizeD[last_item]]}
+                bool_val={true} set_bool_val={undefined}
+                underlayColor={underlayColor[last_item]}
+                true_img={last_item} false_img={last_item} press_type="none"/>
+            </>
+        );
+  }
 
