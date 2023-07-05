@@ -11,13 +11,14 @@ import { getFormattedDateTime } from '../asyncOperations/fileOperations';
 import { DebugScreen } from './screen_gps_dbg';
 import { SpeedScreen } from './screen_gps_speeds';
 import { MapScreen } from './screen_gps_maps'
+import { SimulateScreen } from './screen_gps_simulate';
 
 import { useAppState } from '../assets/stateContext';
 
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../asyncOperations/requests';
-import { on_new_gps_data } from '../asyncOperations/gpsOperations';
+import { isLocationFarEnough, on_new_gps_data } from '../asyncOperations/gpsOperations';
 import { handleTimerInterval, } from '../asyncOperations/utils';
 
 import { CoveredDistance, SpeedTimeCalced_Dict } from '../assets/types';
@@ -45,6 +46,10 @@ export function Screen_GPS_Debug({route}) {
           initTimestamp, setInitTimestamp,
           lastTimestamp, setLastTimestamp,
           setActiveTime, setPassiveTime, setTotalTime,
+
+          mapLocations, setMapLocations,
+          mapRegion, setMapRegion,
+          simulationIsPaused,
 
           runState,
         } = useAppState();
@@ -164,7 +169,7 @@ export function Screen_GPS_Debug({route}) {
   useEffect(() => {
     const handleInterval = setInterval(async () => {
       await handleTimerInterval(
-        bool_record_locations,
+        (bool_record_locations || !simulationIsPaused),
         initTimestamp,
         lastTimestamp,
         setActiveTime,
@@ -178,17 +183,17 @@ export function Screen_GPS_Debug({route}) {
     return () => {
       clearInterval(handleInterval);
     };
-  }, [bool_record_locations, initTimestamp, lastTimestamp]);
+  }, [bool_record_locations, simulationIsPaused, initTimestamp, lastTimestamp]);
   
   // useEffect appending updated location to arr_location_history
   useEffect(() => {
     const fetchData = async () => {
       //console.log("try fetchData ", isCalculating, bool_record_locations);
-      if (bool_record_locations) {
-        await updateLocationHistory(arr_location_history, bool_record_locations, current_location);
+      if (bool_record_locations || !simulationIsPaused) {
+        await updateLocationHistory(arr_location_history, (bool_record_locations || !simulationIsPaused), current_location);
         await updatePosDict(arr_location_history, pos_array_kalman, pos_array_diffs, 
                             pos_array_timestamps, set_pos_array_timestamps, current_location);
-        await updateDistances(arr_location_history, bool_record_locations, pos_array_diffs, current_location, setCoveredDistance);
+        await updateDistances(arr_location_history, (bool_record_locations || !simulationIsPaused), pos_array_diffs, current_location, setCoveredDistance);
       } else {
         console.log("CANCEL CALCULATING");
       }
@@ -209,13 +214,13 @@ export function Screen_GPS_Debug({route}) {
     (async () => {
       //console.log("++++++++++++++++")      
       //console.log("stDict:",stDict, stDict_hasKey(stDict, "noesence"))
-      if (isMounted && bool_record_locations && (display_page_mode === 'SpeedScreens' || display_page_mode === 'Debug Screen')) {
+      if (isMounted && (bool_record_locations || !simulationIsPaused) && (display_page_mode === 'SpeedScreens' || display_page_mode === 'Debug Screen')) {
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[0]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[1]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[2]);
 
       }
-      if (isMounted && bool_record_locations && display_page_mode === 'SpeedScreens') {
+      if (isMounted && (bool_record_locations || !simulationIsPaused) && display_page_mode === 'SpeedScreens') {
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[0]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[1]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[2]);
@@ -243,6 +248,36 @@ export function Screen_GPS_Debug({route}) {
     }
   }, [runState]);
 
+  //MAP PAGE USE_EFFECTS
+  useEffect(() => {
+    if (current_location && current_location.coords) {
+      const { latitude, longitude } = current_location.coords;
+  
+      const checkLocation = async () => {
+        const isFarEnough = await isLocationFarEnough(
+          { latitude, longitude },
+          mapLocations
+        );
+  
+        if (isFarEnough) {
+          setMapLocations([...mapLocations, { latitude, longitude }]);
+        }
+  
+        setMapRegion((prevRegion) => ({
+          ...prevRegion,
+          latitude,
+          longitude,
+        }));
+      };
+  
+      checkLocation();
+    }
+  }, [current_location]);
+  
+
+  //SIMULATION USE_EFFECTS
+
+
     let content = null;
     if (display_page_mode === 'Debug Screen') {
       content = <DebugScreen insets={insets} stDict={stDict} screenText={screenText}/>;
@@ -250,6 +285,8 @@ export function Screen_GPS_Debug({route}) {
       content = <SpeedScreen insets={insets} stDict={stDict} covered_dist={coveredDistance}/>;
     }else if (display_page_mode === 'MapScreen') {
       content = <MapScreen insets={insets}/>;
+    }else if (display_page_mode === 'SimulateScreen') {
+      content = <SimulateScreen insets={insets}/>;
     }
     return (
       <>

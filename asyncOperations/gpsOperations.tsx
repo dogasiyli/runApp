@@ -1,4 +1,6 @@
 import { OfflineLocationData } from "../assets/constants";
+import { IMapLocation } from "../assets/interface_definitions";
+import { calc_geodesic } from "./utils";
 
 
 export const on_new_gps_data = (data, set_current_location) => {
@@ -38,3 +40,32 @@ export const on_new_gps_data = (data, set_current_location) => {
         });
       }
 }
+
+export const isLocationFarEnough = async (curLoc:IMapLocation, locations:Array<IMapLocation>) => {
+  const distanceThreshold = 20; // Minimum distance threshold in meters
+
+  if (!locations || locations.length===0)
+  {
+    console.log("NO LOCATIONS YET")
+    return true;
+  }
+  //console.log(locations.length, " of locations will be checked for distance")
+  for (const loc of locations) {
+    //console.log("try loc: ", loc, curLoc)
+    const distance = await calc_geodesic(
+      { lat: curLoc.latitude, lon: curLoc.longitude },
+      { lat: loc.latitude, lon: loc.longitude },
+      false
+    );
+
+    if (distance)
+    {
+      //console.log("distance: ", distance)
+      if (distance.s_geo_len < distanceThreshold) {
+        return false; // Current location is not far enough from a location in the array
+      }
+    }
+  }
+
+  return true; // Current location is far enough from all locations in the array
+};

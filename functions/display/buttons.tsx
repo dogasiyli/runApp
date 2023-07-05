@@ -36,6 +36,8 @@ const speed_screen_images = {
   "finish": require('../../assets/pngs/finish.png'),
   "share": require('../../assets/pngs/share.png'),
   "stats": require('../../assets/pngs/stats.png'),
+  "simulate": require('../../assets/pngs/simulate.png'),
+  "wait": require('../../assets/pngs/wait.png'),
 }
 const run_image_ident = {
   "run00": "standing",
@@ -415,7 +417,10 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
   );
 };
 
-export const BT_Circle_Clickable: React.FC<CircleClickableProps> = ({ renderBool, top, left, size_perc, nav, page_name, page_navigate_str, display_page_mode }) => {
+export const BT_Circle_Clickable: React.FC<CircleClickableProps> = ({ 
+  renderBool, 
+  top, left, size_perc, 
+  nav, page_name, page_navigate_str, display_page_mode }) => {
   if (!renderBool) {
     return null;
   }
