@@ -15,6 +15,7 @@ export const SimulateScreen: React.FC<SimulateScreenProps> = ({ insets }) => {
     const simulation_step_msec = 2000;
     const [initTimestamp, setInitTimestamp] = useState(0);
     const { current_location, set_current_location,
+        simulationIndex, setSimulationIndex,
         simulationTimestampOffset, setSimulationTimestampOffset,
         simulationInterval, setSimulationInterval,
         simulationGpsDataArray, setSimulationGpsDataArray,
@@ -28,7 +29,7 @@ export const SimulateScreen: React.FC<SimulateScreenProps> = ({ insets }) => {
         if (simulationGpsDataArray.length === 0) {
             console.log("Loading simulation data...");
             // Parse the JSON data from the file
-            let parsedData = require('../assets/plottable_run_examples/runPositions_20230702_092833_1.json');
+            let parsedData = require('../assets/plottable_run_examples/runPositions_20230526_123109_circleRun.json');
             console.log("Loaded simulation data. Type:", typeof parsedData);
             console.log("Length of positions:", parsedData.length);
             if (parsedData[0]["timestamp"] !== undefined && parsedData[0]["timestamp"] !== 0) {
@@ -63,13 +64,17 @@ export const SimulateScreen: React.FC<SimulateScreenProps> = ({ insets }) => {
 
 
     const startSimulation = (timeDifference) => {
-        let currentIndex = Math.floor(simulationTimestampOffset / simulation_step_msec);
+        let currentIndex = simulationIndex;
         console.log("startSimulation: currentIndex:", currentIndex);
+        if (currentIndex==0) {
+          setSimulationTimestampOffset(0);
+          set_current_location(simulationGpsDataArray[0]);
+        }
     
         // Update current location at a fixed interval (X seconds in this case)
         const interval = setInterval(() => {
           const newIndex = currentIndex + 1;
-          console.log("startSimulation: newIndex:", newIndex, simulationGpsDataArray.length);
+          console.log("newIndex:", newIndex, simulationGpsDataArray.length);
     
           if (newIndex >= simulationGpsDataArray.length) {
             // Reached the end of the array, stop the simulation
@@ -79,11 +84,13 @@ export const SimulateScreen: React.FC<SimulateScreenProps> = ({ insets }) => {
             return;
           }
     
-          const nextTimestamp = initTimestamp + timeDifference + (newIndex * simulation_step_msec);
-          const nextLocation = { ...simulationGpsDataArray[newIndex], timestamp: nextTimestamp };
-          set_current_location(nextLocation);
+          const difTimeStep = simulationGpsDataArray[newIndex].timestamp - simulationGpsDataArray[currentIndex].timestamp;
+          console.log("difTimeStep:", currentIndex, newIndex, difTimeStep);
+
+          set_current_location(simulationGpsDataArray[newIndex]);
           currentIndex = newIndex;
-          setSimulationTimestampOffset((prevOffSet) => prevOffSet + simulation_step_msec);
+          setSimulationIndex((prevIndex) => prevIndex + 1);
+          setSimulationTimestampOffset((prevOffSet) => prevOffSet + difTimeStep);
         }, simulation_step_msec);
     
         // Store the interval reference to clear it later if needed

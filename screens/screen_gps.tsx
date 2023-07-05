@@ -47,8 +47,7 @@ export function Screen_GPS_Debug({route}) {
           lastTimestamp, setLastTimestamp,
           setActiveTime, setPassiveTime, setTotalTime,
 
-          mapLocations, setMapLocations,
-          mapRegion, setMapRegion,
+          mapData, setMapData,
           simulationIsPaused,
 
           runState,
@@ -256,17 +255,23 @@ export function Screen_GPS_Debug({route}) {
       const checkLocation = async () => {
         const isFarEnough = await isLocationFarEnough(
           { latitude, longitude },
-          mapLocations
+          mapData.locations
         );
   
         if (isFarEnough) {
-          setMapLocations([...mapLocations, { latitude, longitude }]);
+          setMapData((prevState) => ({
+            ...prevState,
+            locations: [...prevState.locations, { latitude, longitude }],
+          }));
         }
   
-        setMapRegion((prevRegion) => ({
-          ...prevRegion,
-          latitude,
-          longitude,
+        setMapData((prevMapData) => ({
+          ...prevMapData,
+          region: {
+            ...prevMapData.region,
+            latitude,
+            longitude,
+          },
         }));
       };
   

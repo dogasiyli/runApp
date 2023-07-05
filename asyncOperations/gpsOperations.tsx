@@ -50,22 +50,23 @@ export const isLocationFarEnough = async (curLoc:IMapLocation, locations:Array<I
     return true;
   }
   //console.log(locations.length, " of locations will be checked for distance")
-  for (const loc of locations) {
-    //console.log("try loc: ", loc, curLoc)
-    const distance = await calc_geodesic(
+  //for (const loc of locations) {
+  const loc = locations[locations.length-1];
+  //console.log("try loc: ", loc, curLoc)
+  const distance = await calc_geodesic(
       { lat: curLoc.latitude, lon: curLoc.longitude },
       { lat: loc.latitude, lon: loc.longitude },
       false
-    );
+  );
 
-    if (distance)
-    {
-      //console.log("distance: ", distance)
-      if (distance.s_geo_len < distanceThreshold) {
-        return false; // Current location is not far enough from a location in the array
-      }
+  if (distance)
+  {
+    //console.log("distance: ", distance)
+    if (distance.s_geo_len < distanceThreshold) {
+      return false; // Current location is not far enough from a location in the array
     }
   }
+  //}
 
   return true; // Current location is far enough from all locations in the array
 };

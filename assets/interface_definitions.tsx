@@ -145,3 +145,16 @@ export interface IMapRegion{
   latitudeDelta: number;
   longitudeDelta: number;
 }
+
+export interface IMapViewProps {
+  detailValue: number;
+  mapTypeInt: number;
+  mapTypeString: string;
+}
+
+export interface IMapData {
+  locations: Array<IMapLocation>;
+  initial_region: IMapRegion;
+  region: IMapRegion;
+  viewProps: IMapViewProps;
+}

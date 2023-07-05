@@ -19,18 +19,36 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
     const { current_location, 
         activeTime, passiveTime, totalTime,
         bool_update_locations, enable_update_locations,
-        mapLocations, mapRegion, 
+        mapData, setMapData,
         runState, setRunState,
       } = useAppState();
      
-      const [mapDetailValue, setMapDetailValue] = useState(3);
       const handleMapValueChange = (val:number) => {
-        setMapDetailValue(val);
+        setMapData((prevMapData) => ({
+          ...prevMapData,
+          viewProps: {
+            ...prevMapData.viewProps,
+            detailValue: val,
+          },
+        }));
       };
-      const [mapTypeInt, setMapTypeInt] = useState(1);
-      const [mapTypeString, setMapTypeString] = useState('dark');
       const handleMapTypeIntChange = (val:number) => {
-        setMapTypeInt(val);
+        setMapData((prevMapData) => ({
+          ...prevMapData,
+          viewProps: {
+            ...prevMapData.viewProps,
+            mapTypeInt: val,
+          },
+        }));
+      };
+      const handleMapTypeStringChange = (val:string) => {
+        setMapData((prevMapData) => ({
+          ...prevMapData,
+          viewProps: {
+            ...prevMapData.viewProps,
+            mapTypeString: val,
+          },
+        }));
       };
 
       const init_pos = {lat: 0, lon: 0};
@@ -45,15 +63,15 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
         "dark_333" : require('../assets/map_styles/dark_333.json'),
         "dark_444" : require('../assets/map_styles/dark_444.json'),
       }
-      let map_style = map_styles[mapTypeString+"_"+mapDetailValue.toFixed(0).repeat(3)];
+      let map_style = map_styles[mapData.viewProps.mapTypeString+"_"+mapData.viewProps.mapTypeInt.toFixed(0).repeat(3)];
 
       useEffect(() => {
-        const newMapTypeString = map_type_strings[mapTypeInt-1];
-        setMapTypeString(newMapTypeString);
-        const fname = newMapTypeString+'_'+mapDetailValue.toFixed(0).repeat(3);
+        const newMapTypeString = map_type_strings[mapData.viewProps.mapTypeInt-1];
+        handleMapTypeStringChange(newMapTypeString);
+        const fname = newMapTypeString+'_'+mapData.viewProps.detailValue.toFixed(0).repeat(3);
         console.log("fname: ", fname)
         map_style = map_styles[fname];
-      }, [mapDetailValue, mapTypeInt]);
+      }, [mapData.viewProps.detailValue, mapData.viewProps.mapTypeInt]);
 
   return (
     <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
@@ -80,14 +98,14 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
                   top:"24%", left:"36%", position:"absolute",
                   width: '50%' }}>
      <Text style={{ alignSelf: 'center', color: 'white' }}>
-        Type({mapTypeString.slice(0,4)})
+        Type({mapData.viewProps.mapTypeString.slice(0,4)})
       </Text>
       <Slider
         style={{width: '80%', alignSelf: 'center' }}
         minimumValue={1}
         maximumValue={2}
         step={1}
-        value={mapTypeInt}
+        value={mapData.viewProps.mapTypeInt}
         onValueChange={handleMapTypeIntChange}
       />
     </View>
@@ -96,32 +114,32 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
                   top:"20%", left:"40%", position:"absolute",
                   width: '50%' }}>
      <Text style={{ alignSelf: 'center', color: 'white' }}>
-        Detail({mapDetailValue})
+        Detail({mapData.viewProps.detailValue.toFixed(0)})
       </Text>
      <Slider
         style={{width: '80%', alignSelf: 'center' }}
         minimumValue={1}
         maximumValue={4}
         step={1}
-        value={mapDetailValue}
+        value={mapData.viewProps.detailValue}
         onValueChange={handleMapValueChange}
       />
     </View>
   
 
     <View style={{flex: 1, position:"absolute", alignItems:"center", justifyContent:"center", top:"30%"}}>
-    <Text style={{color:"white"}}>{mapRegion.latitude !== 0.0 ? "Your Position on Earth" : "Waiting For Location"}</Text> 
-    {mapRegion.latitude === 0.0 
+    <Text style={{color:"white"}}>{mapData.region.latitude !== 0.0 ? "Your Position on Earth" : "Waiting For Location"}</Text> 
+    {mapData.region.latitude === 0.0 
         ? (<Text style={{ color: "white" }}>Waiting For Location</Text>) 
         : (
        <MapView provider={PROVIDER_GOOGLE} 
                 style={{backgroundColor:"#fff", width:310,height:300,}}
-                initialRegion={mapRegion}
+                initialRegion={mapData.initial_region}
                 showsUserLocation={true}
                 showsCompass={true}
                 rotateEnabled={true}
                 zoomEnabled={true}
-                region={mapRegion}
+                region={mapData.region}
                 customMapStyle={map_style}
           >
           <Marker
@@ -129,8 +147,8 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
                 title="this is a marker"
                 description="this is a marker example"
               />
-            {mapLocations.length > 0 &&  
-              mapLocations.map((location: IMapLocation, index: number) => (
+            {mapData.locations.length > 0 &&  
+              mapData.locations.map((location: IMapLocation, index: number) => (
               <Marker
                 key={`location-${index}`}
                 coordinate={{
