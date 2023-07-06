@@ -1,5 +1,5 @@
 import { TimestampDiffInfoProps } from "../assets/interface_definitions";
-import { GeodesicResult, CoveredDistance} from "../assets/types";
+import { GeodesicResult, CoveredDistance, GPS_Data} from "../assets/types";
 
 export const format_time_diff = (time_diff: number): TimestampDiffInfoProps => {
   const diffInSeconds = Math.floor(time_diff/1000);
@@ -35,6 +35,8 @@ export const handleTimerInterval = async (
     bool_record_locations:boolean,
     initTimestamp: number,
     lastTimestamp: number,
+    simulationIndex: number,
+    simulationGpsDataArray: Array<GPS_Data>,
     setActiveTime: React.Dispatch<React.SetStateAction<number>>,
     setPassiveTime: React.Dispatch<React.SetStateAction<number>>,
     setTotalTime: React.Dispatch<React.SetStateAction<number>>,
@@ -48,17 +50,36 @@ export const handleTimerInterval = async (
       setInitTimestamp(curTimestamp);
       setLastTimestamp(curTimestamp);
     }
+    if (simulationIndex>0 && initTimestamp === null) {
+      setInitTimestamp(simulationGpsDataArray[0].timestamp);
+      setLastTimestamp(simulationGpsDataArray[0].timestamp);
+    }
   
     // Check if bool_record_locations changed
     if (lastTimestamp !== null) {
-      const duration = curTimestamp - lastTimestamp;
-      if (bool_record_locations) {
-        setActiveTime((prevActiveTime) => prevActiveTime + duration);
-      } else {
-        setPassiveTime((prevPassiveTime) => prevPassiveTime + duration);
+
+      if (bool_record_locations)
+      {
+        const duration = curTimestamp - lastTimestamp;
+        if (bool_record_locations) {
+          setActiveTime((prevActiveTime) => prevActiveTime + duration);
+        } else {
+          setPassiveTime((prevPassiveTime) => prevPassiveTime + duration);
+        }
+        setTotalTime((prevTotalTime) => prevTotalTime + duration);
+        setLastTimestamp(curTimestamp);
       }
-      setTotalTime((prevTotalTime) => prevTotalTime + duration);
-      setLastTimestamp(curTimestamp);
+      else if (simulationIndex>0)
+      {
+        const duration = simulationGpsDataArray[simulationIndex].timestamp - lastTimestamp;
+        if (duration<2000) {
+          setActiveTime((prevActiveTime) => prevActiveTime + duration);
+        } else {
+          setPassiveTime((prevPassiveTime) => prevPassiveTime + duration);
+        }
+        setTotalTime((prevTotalTime) => prevTotalTime + duration);
+        setLastTimestamp(simulationGpsDataArray[simulationIndex].timestamp);
+      }
     }
   };
   

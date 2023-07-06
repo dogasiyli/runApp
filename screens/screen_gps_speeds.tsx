@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Circle_Text_Color, BT_Toggle_Image } from '../functions/display/buttons';
 import { Circle_Image_Pace_v1, Circle_Timer_Triangle, Circle_Covered_Distance, 
-         Circle_Pace_Picked, ControlsSpeedScreen } from '../functions/display/buttons_special';
+         Circle_Pace_Picked, ControlsSpeedScreen, ControlSimulationMenu } from '../functions/display/buttons_special';
 import { useAppState } from '../assets/stateContext';    
 import { getFormattedDateTime } from '../asyncOperations/fileOperations';
 import { CoveredDistance, SpeedTimeCalced_Dict, stDict_hasKey} from '../assets/types';
@@ -16,12 +16,19 @@ interface SpeedScreenProps {
 }
 
 export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered_dist }) => {
-    const row_tops = ["60%", "90%"];
+    const row_tops = ["35%", "90%"];
     const pace_size = 0.13;
     const { current_location, 
         activeTime, passiveTime, totalTime,
         bool_update_locations, enable_update_locations,
-        bool_record_locations, enable_record_locations,
+
+        simulationIndex,
+        simulationIsPaused, setSimulationIsPaused,
+        simulationSelected, setSimulationSelected,
+        simulationStepSelected, setSimulationStepSelected,
+        simulationGpsDataArray,
+
+        
         runState, setRunState,
       } = useAppState();
     //const esa = [1001, 60*1000+1001, 10*60*1000+1001, 61*60*1000+1001,90*61*60*1000+1001];
@@ -96,12 +103,24 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
                           top={row_tops[1]} left="75%" beforeText={bool_timeF_distT ? 'meters' : 'seconds'}
                           size={pace_size}/>
 
+    {simulationIndex==-1 ?
 
     <ControlsSpeedScreen renderBool={true} 
                          bool_update_locations={bool_update_locations} enable_update_locations={enable_update_locations}
                          runState={runState} setRunState={setRunState} current_location={current_location}
-                         top={145}
+                         top={80}
     />
+    :
+      <ControlSimulationMenu renderBool={true}
+          top="80%" left="0%"
+          simulationIndex={simulationIndex}
+          simulationIsPaused={simulationIsPaused} setSimulationIsPaused={setSimulationIsPaused}
+          simulationSelected={simulationSelected} setSimulationSelected={setSimulationSelected}
+          simulationGpsDataArray={simulationGpsDataArray}
+          simulationStepSelected={simulationStepSelected}
+          setSimulationStepSelected={setSimulationStepSelected}
+      />
+    }
 
 
     </View>

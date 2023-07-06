@@ -26,6 +26,16 @@ import { updateLocationHistory, updatePosDict, updateDistances, updateCalcedResu
 import { CALC_TIMES_FIXED, CALC_DISTANCES_FIXED } from '../assets/constants';
 
 export function Screen_GPS_Debug({route}) {
+  const ALLOWED_COORD_ACCURACY = 15;
+  const sims_all =
+  {
+    'circleRun': require('../assets/plottable_run_examples/runPositions_20230526_123109_circleRun.json'),
+    'walk01': require('../assets/plottable_run_examples/runPositions_20230702_092833_walk01.json'),
+    'BFFast': require('../assets/plottable_run_examples/runPositions_20230705_204451_BFFast.json'),
+    'BFWarm': require('../assets/plottable_run_examples/runPositions_20230705_202354_BFWarm.json'),
+    'garminpace13': require('../assets/plottable_run_examples/runPositions_20230525_062510_garminpace13.json'),
+  }
+
   const insets = useSafeAreaInsets();
   const [screenText, setscreenText] = useState("No locations yet");
   const [isCalculating, setIsCalculating] = useState(false);
@@ -48,7 +58,13 @@ export function Screen_GPS_Debug({route}) {
           setActiveTime, setPassiveTime, setTotalTime,
 
           mapData, setMapData,
-          simulationIsPaused,
+          simulationIsPaused, setSimulationIsPaused,
+          simulationIndex, setSimulationIndex,
+          simulationGpsDataArray, setSimulationGpsDataArray,
+          simulationSelected, simulationStepSelected,
+          simulationTimestampOffset, setSimulationTimestampOffset,
+          simulationInterval, setSimulationInterval,
+          
 
           runState,
         } = useAppState();
@@ -143,6 +159,8 @@ export function Screen_GPS_Debug({route}) {
     }
   }, [bool_record_locations, bool_update_locations]);
 
+
+  // Use effect for handling gps update informations
   useEffect(() => {
     // Check if bool_record_locations has changed
     if (
@@ -165,12 +183,15 @@ export function Screen_GPS_Debug({route}) {
   }, [bool_record_locations, bool_update_locations]);
   
 
+  // useEffect for handling timeIntervals
   useEffect(() => {
     const handleInterval = setInterval(async () => {
       await handleTimerInterval(
-        (bool_record_locations || !simulationIsPaused),
+        bool_record_locations,
         initTimestamp,
         lastTimestamp,
+        simulationIndex,
+        simulationGpsDataArray,
         setActiveTime,
         setPassiveTime,
         setTotalTime,
@@ -188,12 +209,17 @@ export function Screen_GPS_Debug({route}) {
   useEffect(() => {
     const fetchData = async () => {
       //console.log("try fetchData ", isCalculating, bool_record_locations);
-      if (bool_record_locations || !simulationIsPaused) {
+      if ((bool_record_locations || !simulationIsPaused) && (current_location.coords.accuracy < ALLOWED_COORD_ACCURACY)) {
         await updateLocationHistory(arr_location_history, (bool_record_locations || !simulationIsPaused), current_location);
         await updatePosDict(arr_location_history, pos_array_kalman, pos_array_diffs, 
                             pos_array_timestamps, set_pos_array_timestamps, current_location);
         await updateDistances(arr_location_history, (bool_record_locations || !simulationIsPaused), pos_array_diffs, current_location, setCoveredDistance);
-      } else {
+      } 
+      else if (current_location.coords.accuracy >= ALLOWED_COORD_ACCURACY)
+      {
+        console.log("skip gps loc - accuracy is too low: ", current_location.coords.accuracy);
+      }
+      else {
         console.log("CANCEL CALCULATING");
       }
     };
@@ -207,19 +233,27 @@ export function Screen_GPS_Debug({route}) {
 
 
   // useEffect calculations from arr_location_history
+  // important to decide when to update when not to update
   useEffect(() => {
     let isMounted = true;
     // Define an inner async function and call it immediately
     (async () => {
       //console.log("++++++++++++++++")      
       //console.log("stDict:",stDict, stDict_hasKey(stDict, "noesence"))
-      if (isMounted && (bool_record_locations || !simulationIsPaused) && (display_page_mode === 'SpeedScreens' || display_page_mode === 'Debug Screen')) {
+
+
+      // update only if recording is enabled or simulation is started
+      const run_updates = bool_record_locations || !simulationIsPaused || simulationIndex>0;
+      const _calc_times = display_page_mode === 'SpeedScreens' || display_page_mode === 'SimulateScreen' || display_page_mode === 'Debug Screen';
+      const _calc_dists = display_page_mode === 'SpeedScreens' || display_page_mode === 'SimulateScreen';
+      
+      if (isMounted && run_updates && _calc_times) {
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[0]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[1]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[2]);
 
       }
-      if (isMounted && (bool_record_locations || !simulationIsPaused) && display_page_mode === 'SpeedScreens') {
+      if (isMounted && run_updates && _calc_dists) {
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[0]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[1]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[2]);
@@ -257,8 +291,9 @@ export function Screen_GPS_Debug({route}) {
           { latitude, longitude },
           mapData.locations
         );
+        const isToBeAdded = bool_record_locations || !simulationIsPaused;
   
-        if (isFarEnough) {
+        if (isFarEnough && isToBeAdded) {
           setMapData((prevState) => ({
             ...prevState,
             locations: [...prevState.locations, { latitude, longitude }],
@@ -281,7 +316,95 @@ export function Screen_GPS_Debug({route}) {
   
 
   //SIMULATION USE_EFFECTS
+    // useEffect appending updated location to arr_location_history
+    useEffect(() => {
+      const fetchData = async () => {
+        console.log("selectedSimulation changed to(", simulationSelected, "), simulationIndex(", simulationIndex ,")")
+          if (simulationIndex=== -1) {
+            console.log("Loading simulation data:", simulationSelected);
+            // Parse the JSON data from the file
+            let parsedData = sims_all[simulationSelected];
+            console.log("Loaded simulation data. Type:", typeof parsedData);
+            console.log("Length of positions:", parsedData.length);
+            if (parsedData[0]["timestamp"] !== undefined && parsedData[0]["timestamp"] !== 0) {
+              parsedData = parsedData.slice(1, parsedData.length)
+              console.log("Removed first element of positions:", parsedData.length);
+            }
+            setSimulationGpsDataArray(parsedData);
+        }
+      };
+    
+      fetchData();
+    
+      return () => {
+        // Cleanup function
+      };
+    }, [simulationSelected]);
 
+    useEffect(() => {
+      console.log("++++++++++++++++simulationIsPaused:", simulationIsPaused);
+      console.log("++++++++++++++++simulationTimestampOffset:", simulationTimestampOffset);
+      if (!simulationIsPaused) {
+          // Resume the simulation
+          enableSimulation(simulationIndex+1);
+      } 
+      //else if (!simulationIsPaused && simulationTimestampOffset>0) {console.log(":::::::::::::::JUST PAGE IS REOPENED-simulationTimestampOffset:", simulationTimestampOffset);}
+      else {
+          // Pause the simulation
+          console.log("pauseSimUseEffect:", simulationIsPaused);
+          clearInterval(simulationInterval);
+          setSimulationInterval(null);
+      }
+    }, [simulationIsPaused]);
+
+    const startSim = () => {
+      console.log("0.started simulation adding first gps data array with set_current_location");
+      setSimulationTimestampOffset(0);
+      set_current_location(simulationGpsDataArray[0]); 
+      console.log("simulationGpsDataArray[0]:\n", simulationGpsDataArray[0]);   
+    }
+    const endSim = () => {
+      console.log("endSim: simulationIsPaused:", simulationIsPaused);
+      clearInterval(simulationInterval);
+      setSimulationInterval(null);
+      setSimulationIsPaused(true);
+    }
+    const enableSimulation = (initIndex:number) => {
+        let currentIndex = initIndex;
+        console.log("??????????????startSimulation: currentIndex:", currentIndex);
+    
+        // Update current location at a fixed interval (X seconds in this case)
+        const interval = setInterval(() => {
+          const prevIndex = currentIndex - 1;
+
+          if (currentIndex==0) {
+            startSim();
+            currentIndex=1;
+          }
+          else if (currentIndex == simulationGpsDataArray.length || simulationIsPaused) {
+            // Reached the end of the array, stop the simulation
+            endSim();
+            return;
+          }
+          else {      
+            const difTimeStep = simulationGpsDataArray[currentIndex].timestamp - simulationGpsDataArray[prevIndex].timestamp;
+
+
+            console.log(prevIndex, currentIndex, difTimeStep);
+            //console.log(currentIndex, ".adding new gps data array with set_current_location");
+            //console.log("difTimeStep:", prevIndex, currentIndex, difTimeStep);
+            //console.log("simulationGpsDataArray[",currentIndex,"]:\n", simulationGpsDataArray[currentIndex]);   
+  
+            set_current_location(simulationGpsDataArray[currentIndex]);
+            currentIndex = currentIndex + 1;
+            setSimulationIndex(currentIndex-1);
+            setSimulationTimestampOffset((prevOffSet) => prevOffSet + difTimeStep);
+          }
+        }, simulationStepSelected);
+    
+        // Store the interval reference to clear it later if needed
+        setSimulationInterval(interval);
+    };
 
     let content = null;
     if (display_page_mode === 'Debug Screen') {

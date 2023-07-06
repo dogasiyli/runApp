@@ -9,6 +9,7 @@ import { format_time_diff, calc_pace_from_kmh } from '../../asyncOperations/util
 import { ViewRCProps, CircleTextErrorProps, CircleTextColorProps, CircleTextGPSProps, CircleClickableProps,
          CircleImagePaceProps, DisplayDataProps, MoveableImageProps, ToggleImageProps } from '../../assets/interface_definitions';
 import { getReadableDuration } from '../../asyncOperations/fileOperations';
+import { Picker } from '@react-native-picker/picker';
 
 const button_images = {
   "moveable_default": require('../../assets/pngs/defaultMoveable.png'),
@@ -467,7 +468,7 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
   toggle_func = toggle_func===undefined ? toggle : toggle_func;
 
   return (
-    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+    <View style={{ flex: 1, position: 'absolute', top:top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
       <TouchableHighlight underlayColor={"transparent"} 
                           onPress={press_type === "short" || press_type === "both" ? () => toggle_func(toggle_val) : undefined}
                           onLongPress={press_type === "long" || press_type === "both" ? () => toggle_func(toggle_val) : undefined}>
@@ -500,3 +501,109 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
     </View>
   );
 };
+
+
+interface BT_Picker_Props {
+  renderBool: boolean;
+  top:string; 
+  left:string;
+  width?:string;
+  pickableBool?:boolean;
+  items:string[] | number[];
+  value:string | number;
+  setValue:React.Dispatch<React.SetStateAction<string|number>>;
+  borderRadius?:number;
+  borderWidth?:number; 
+  borderColor?:string;
+  belowText?:string;
+  textColor?:string;
+  itemLabelsAddLast?:string;
+  itemLabelsAddFirst?:string;
+  fontSize?:number;
+}
+export const BT_Picker: React.FC<BT_Picker_Props> = ({ 
+    renderBool, 
+    items,
+    top, left, 
+    value, setValue, 
+    pickableBool=true,
+    width="100%",
+    borderRadius=20,
+    borderWidth=1,
+    borderColor="#777733",
+    belowText=undefined,
+    textColor="white",
+    itemLabelsAddLast="",itemLabelsAddFirst="",
+    fontSize=12
+    }) => {
+    if (!renderBool) {
+      return null;
+    }
+    const handleValueChange = (itemValue) => {
+      setValue(itemValue);
+    };
+    return (  
+      <View style={{
+        flex: 1, position: 'absolute',
+        top:top, left:left, width:width,
+        alignContent:"center", alignSelf:"center",
+        backgroundColor: '#000088',
+        borderRadius: borderRadius, borderWidth:borderWidth, borderColor:borderColor, overflow: 'hidden'}}>
+      <Picker
+        enabled={pickableBool}
+        selectedValue={value}
+        onValueChange={handleValueChange}
+        style={{ color: 'black', backgroundColor: '#998888', width:'100%' }}
+      >
+        {items.map((item, index) => (
+          <Picker.Item style={{fontSize:fontSize, color:textColor, backgroundColor: '#888800'}} 
+                       key={index} 
+                       label={(itemLabelsAddFirst)+(typeof item === 'number' ? item.toString() : item)+(itemLabelsAddLast)}  
+                       value={item} 
+                       />
+        ))}
+      </Picker>
+      <Text style={{ alignSelf: 'center', marginTop: 10, color: textColor }}>
+        {belowText}
+      </Text>
+    </View>
+    );
+  };
+
+
+  // interface BT_Picker_Props {
+  //   renderBool: boolean;
+  //   top:string; 
+  //   left:string;
+  //   width?:string;
+  //   pickableBool?:boolean;
+  //   items:string[] | number[];
+  //   value:string | number;
+  //   setValue:React.Dispatch<React.SetStateAction<string|number>>;
+  //   borderRadius?:number;
+  //   borderWidth?:number; 
+  //   borderColor?:string;
+  //   belowText?:string;
+  //   textColor?:string;
+  // }
+// export const BT_F: React.FC<F_Props> = ({ 
+  // renderBool, 
+  // items,
+  // top, left, 
+  // value, setValue, 
+  // pickableBool=true,
+  // width="100%",
+  // borderRadius=20,
+  // borderWidth=1,
+  // borderColor="#777733",
+  // belowText=undefined,
+  // textColor="white"
+//   }) => {
+//   if (!renderBool) {
+//     return null;
+//   }
+//   return (  
+//     <>
+//     </>
+//   );
+// };

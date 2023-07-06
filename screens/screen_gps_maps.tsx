@@ -170,7 +170,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
     <ControlsSpeedScreen renderBool={true} 
                          bool_update_locations={bool_update_locations} enable_update_locations={enable_update_locations}
                          runState={runState} setRunState={setRunState} current_location={current_location}
-                         top={145}
+                         top={80}
     />
 
 

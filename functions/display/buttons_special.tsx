@@ -1,9 +1,9 @@
 import React from 'react';
 import { TouchableHighlight, View } from 'react-native';
 import { CircleImagePaceV1Props, CircleTimerTriangleProps, CoveredDistanceProps, PickedPaceProps } from '../../assets/interface_definitions';
-import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image } from '../display/buttons';
+import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image, BT_Picker } from '../display/buttons';
 
-import { stDict_hasKey } from '../../assets/types';
+import { GPS_Data, stDict_hasKey } from '../../assets/types';
 import { getReadableDuration } from '../../asyncOperations/fileOperations';
 import { CALC_TIMES_FIXED } from '../../assets/constants';
 import { calc_run_params } from '../../asyncOperations/utils';
@@ -236,6 +236,7 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
     const new_run_state = (runState === "initial" || runState === "paused") ? "running" : (runState === "running" ? "paused" : runState);
 
     const last_item = (runState === "initial" || runState === "running") ? "gps" : (runState === "paused" ? "finish" : "share");
+    const gps_image = bool_update_locations ? "gps" : "no-gps";
 
     //console.log("last_item:",last_item)
     if (runState=="initial" || runState=="running" || runState=="paused")
@@ -267,7 +268,7 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
                 toggle_val={runState=="paused" ? "finish" : undefined}
 
                 underlayColor={underlayColor[last_item]}
-                true_img={runState=="paused" ? 'finish' : 'gps'} false_img={runState=="paused" ? 'finish' : 'gps'} 
+                true_img={runState=="paused" ? 'finish' : gps_image} false_img={runState=="paused" ? 'finish' : gps_image} 
                 press_type="short"/>
             </>
         );
@@ -297,3 +298,53 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
         );
   }
 
+  interface ControlSimulationProps {
+    renderBool: boolean;
+    top:string; 
+    left:string;
+    simulationIndex: number;
+    simulationIsPaused: boolean;
+    setSimulationIsPaused:React.Dispatch<React.SetStateAction<boolean>>;
+    simulationSelected: string;
+    setSimulationSelected:React.Dispatch<React.SetStateAction<string>>;
+    simulationGpsDataArray: GPS_Data[];
+    simulationStepSelected: number;
+    setSimulationStepSelected:React.Dispatch<React.SetStateAction<number>>;
+  }
+export const ControlSimulationMenu: React.FC<ControlSimulationProps> = ({ 
+  renderBool, 
+  top, left, 
+  simulationIndex,
+  simulationIsPaused,setSimulationIsPaused,
+  simulationSelected, setSimulationSelected,
+  simulationGpsDataArray,
+  simulationStepSelected, setSimulationStepSelected,
+  }) => {
+  if (!renderBool) {
+    return null;
+  }
+  const simToChoose = ['circleRun', 'walk01', 'BFFast', 'BFWarm', 'garminpace13'];
+  const simStepToChoose = [250, 500, 750, 1000, 2000, 3000, 5000, 10000]
+  return (  
+    <>
+        <BT_Picker renderBool={simulationIndex == -1 }
+               pickableBool = {simulationIsPaused}
+               top={top} left="0%" width="35%"
+               items={simToChoose} value={simulationSelected} setValue={setSimulationSelected}
+               belowText={`Len(${simulationGpsDataArray.length})`}
+        />
+        <BT_Picker renderBool={true}
+                pickableBool = {simulationIsPaused}
+                top={top} left={simulationIndex == -1 ? "63%" : "63%"} width="35%"
+                items={simStepToChoose} value={simulationStepSelected} setValue={setSimulationStepSelected}
+                itemLabelsAddLast='ms' fontSize={12}
+                belowText='Steps'
+        />
+        <BT_Toggle_Image renderBool={true} 
+                        top={top} left="40%" size={0.20}
+                        bool_val={simulationIsPaused} set_bool_val={setSimulationIsPaused} 
+                        press_type="both"
+                        true_img='simulate' false_img='wait'/>
+        </>
+  );
+};

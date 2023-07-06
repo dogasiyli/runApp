@@ -66,6 +66,10 @@ interface StateContextType {
     setSimulationGpsDataArray: React.Dispatch<React.SetStateAction<Array<GPS_Data>>>;
     simulationIsPaused: boolean;
     setSimulationIsPaused: React.Dispatch<React.SetStateAction<boolean>>;
+    simulationSelected: string;
+    setSimulationSelected: React.Dispatch<React.SetStateAction<string>>;
+    simulationStepSelected: number;
+    setSimulationStepSelected: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const StateContext = createContext<StateContextType | undefined>(undefined);
@@ -98,11 +102,13 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [passiveTime, setPassiveTime] = useState(0);
     const [totalTime, setTotalTime] = useState(0);
 
-    const [simulationIndex, setSimulationIndex] = useState(0);
+    const [simulationIndex, setSimulationIndex] = useState(-1);
     const [simulationTimestampOffset, setSimulationTimestampOffset] = useState(0);
     const [simulationInterval, setSimulationInterval] = useState(null);
     const [simulationGpsDataArray, setSimulationGpsDataArray] = useState([]);
     const [simulationIsPaused, setSimulationIsPaused] = useState(true);
+    const [simulationSelected, setSimulationSelected] = useState('circleRun');
+    const [simulationStepSelected, setSimulationStepSelected] = useState(3000);
 
     const [runState, setRunState] = useState('initial');
 
@@ -144,6 +150,8 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 simulationInterval, setSimulationInterval,
                 simulationGpsDataArray, setSimulationGpsDataArray,
                 simulationIsPaused, setSimulationIsPaused,
+                simulationSelected, setSimulationSelected,
+                simulationStepSelected, setSimulationStepSelected,
             }}
     >
       {children}
