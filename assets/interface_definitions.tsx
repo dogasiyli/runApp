@@ -133,3 +133,28 @@ export interface PickedPaceProps {
   top:string; 
   left:string;
 }
+
+export interface IMapLocation {
+  latitude: number;
+  longitude: number;
+}
+
+export interface IMapRegion{
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
+
+export interface IMapViewProps {
+  detailValue: number;
+  mapTypeInt: number;
+  mapTypeString: string;
+}
+
+export interface IMapData {
+  locations: Array<IMapLocation>;
+  initial_region: IMapRegion;
+  region: IMapRegion;
+  viewProps: IMapViewProps;
+}

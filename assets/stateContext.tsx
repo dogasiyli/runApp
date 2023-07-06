@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
-import { INIT_PERMITS, INIT_POSITION, TIME_STAMPS } from '../assets/constants';
+import { INITIAL_MAP_DATA, INIT_PERMITS, INIT_POSITION, TIME_STAMPS } from '../assets/constants';
 import { GPS_Data } from '../assets/types';
+import { IMapData } from './interface_definitions';
 
 export interface MoveableImageDict
 {
@@ -51,6 +52,20 @@ interface StateContextType {
 
     runState: string;
     setRunState: React.Dispatch<React.SetStateAction<string>>;
+
+    mapData: IMapData;
+    setMapData: React.Dispatch<React.SetStateAction<IMapData>>;
+
+    simulationIndex: number;
+    setSimulationIndex: React.Dispatch<React.SetStateAction<number>>;
+    simulationTimestampOffset: number;
+    setSimulationTimestampOffset: React.Dispatch<React.SetStateAction<number>>;
+    simulationInterval: NodeJS.Timer;
+    setSimulationInterval: React.Dispatch<React.SetStateAction<NodeJS.Timer>>;
+    simulationGpsDataArray: Array<GPS_Data>;
+    setSimulationGpsDataArray: React.Dispatch<React.SetStateAction<Array<GPS_Data>>>;
+    simulationIsPaused: boolean;
+    setSimulationIsPaused: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const StateContext = createContext<StateContextType | undefined>(undefined);
@@ -83,7 +98,15 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [passiveTime, setPassiveTime] = useState(0);
     const [totalTime, setTotalTime] = useState(0);
 
+    const [simulationIndex, setSimulationIndex] = useState(0);
+    const [simulationTimestampOffset, setSimulationTimestampOffset] = useState(0);
+    const [simulationInterval, setSimulationInterval] = useState(null);
+    const [simulationGpsDataArray, setSimulationGpsDataArray] = useState([]);
+    const [simulationIsPaused, setSimulationIsPaused] = useState(true);
+
     const [runState, setRunState] = useState('initial');
+
+    const [mapData, setMapData] = useState<IMapData>(INITIAL_MAP_DATA);
 
     var [moveableImages, setMoveableImages] = useState([
       {positionX: 75,positionY: 250,selected: false,},
@@ -113,6 +136,14 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 totalTime, setTotalTime,
 
                 runState, setRunState,
+
+                mapData, setMapData,
+
+                simulationIndex, setSimulationIndex,
+                simulationTimestampOffset, setSimulationTimestampOffset,
+                simulationInterval, setSimulationInterval,
+                simulationGpsDataArray, setSimulationGpsDataArray,
+                simulationIsPaused, setSimulationIsPaused,
             }}
     >
       {children}

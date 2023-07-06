@@ -1,5 +1,6 @@
 import { LocationObject } from "expo-location";
 import { SpeedTimeCalced } from "./types";
+import { IMapData } from "./interface_definitions";
 
 export const CALC_DISTANCES_FIXED = [200, 100, 50];
 export const CALC_TIMES_FIXED = [60, 30, 10];
@@ -46,6 +47,27 @@ export const SPEED_TIME_CALCED_INIT:SpeedTimeCalced = {
     "best_speed": 0,
     "best_pace": 0,
 }
+
+export const INITIAL_MAP_DATA: IMapData = {
+    locations: [],
+    initial_region: {
+        latitude: 0.0,
+        longitude: 0.0,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.0010,
+    },
+    region: {
+        latitude: 0.0,
+        longitude: 0.0,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.0010,
+    },
+      viewProps: {
+      detailValue: 3,
+      mapTypeInt: 1,
+      mapTypeString: 'dark',
+    },
+  };
 
 export type OfflineLocationData = {locations: LocationObject[];};
 export const LOCATION_TRACKING = 'location-tracking';
