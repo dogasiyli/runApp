@@ -6,7 +6,6 @@ import { Circle_Timer_Triangle, ControlSimulationMenu } from '../functions/displ
 import { useAppState } from '../assets/stateContext';    
 import { getFormattedDateTime } from '../asyncOperations/fileOperations';
 
-
 interface SimulateScreenProps {
   insets: any;
 }
@@ -15,10 +14,7 @@ export const SimulateScreen: React.FC<SimulateScreenProps> = ({ insets }) => {
     //const [initTimestamp, setInitTimestamp] = useState(0);
 
     const { 
-        simulationIndex, simulationGpsDataArray, 
-        simulationIsPaused, setSimulationIsPaused,
-        simulationSelected, setSimulationSelected,
-        simulationStepSelected, setSimulationStepSelected,
+        simulationParams, setSimulationParams,
         activeTime, passiveTime, totalTime,
     } = useAppState();
 
@@ -46,12 +42,8 @@ export const SimulateScreen: React.FC<SimulateScreenProps> = ({ insets }) => {
 
     <ControlSimulationMenu renderBool={true}
                             top="30%" left="0%"
-                            simulationIndex={simulationIndex}
-                            simulationIsPaused={simulationIsPaused} setSimulationIsPaused={setSimulationIsPaused}
-                            simulationSelected={simulationSelected} setSimulationSelected={setSimulationSelected}
-                            simulationGpsDataArray={simulationGpsDataArray}
-                            simulationStepSelected={simulationStepSelected}
-                            setSimulationStepSelected={setSimulationStepSelected}
+                            simParams={simulationParams}
+                            setSimParams={setSimulationParams}
     />
 
     </View>

@@ -48,20 +48,28 @@ const run_image_ident = {
   "run04": "run_fast",
   "run05": "cycling",
 }
-const run_tresholds = [1, 4, 8, 12, 15]; // Thresholds array
+const run_tresholds = [3, 6, 9, 12, 18]; // Thresholds array
 //const run_tresholds = [1, 2, 3, 4, 5]; // Thresholds array
 const run_colors = ["#404080", "#0000ff", "#44aa00", "#ff8800", "#880000"]; // Colors array
-const minPace = run_tresholds[0];
-const maxPace = run_tresholds[run_tresholds.length - 1];
+const minSpeed = run_tresholds[0];
+const maxSpeed = run_tresholds[run_tresholds.length - 1];
 
-const calculatePaceRGB = (pace: number) => {
+const calculateSpeedRGB = (speed: number) => {
   try {
-    const normalizedPace = Math.max(minPace, Math.min(maxPace, pace));
-    const index1 = Math.min(Math.floor((normalizedPace - minPace) / (maxPace - minPace) * (run_colors.length - 1)), run_colors.length - 1);
+    const clampedSpeed = Math.max(minSpeed, Math.min(maxSpeed, speed));
+    let index1=0;
+    for (let i = 1; i < run_tresholds.length - 1; i++) {
+      if (clampedSpeed >= run_tresholds[i] && clampedSpeed < run_tresholds[i + 1]) {
+        index1 = i;
+        break;
+      }
+    }
     const index2 = Math.min(index1 + 1, run_colors.length - 1);
     const color1 = run_colors[index1];
     const color2 = run_colors[index2];
-    const percentage = (normalizedPace - run_tresholds[index1]) / (run_tresholds[index2] - run_tresholds[index1]);
+    const percentage = index1==index2 ? 1.0 : (clampedSpeed - run_tresholds[index1]) / (run_tresholds[index2] - run_tresholds[index1]);
+
+    //console.log("speed,percentage:",index1,index2,speed,percentage)
     
     const R = Math.round(parseInt(color1.slice(1, 3), 16) * (1 - percentage) + parseInt(color2.slice(1, 3), 16) * percentage);
     const G = Math.round(parseInt(color1.slice(3, 5), 16) * (1 - percentage) + parseInt(color2.slice(3, 5), 16) * percentage);
@@ -364,7 +372,7 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
   const { width } = Dimensions.get('window');
   const circleSize = width * size; // Adjust the percentage as needed
 
-  const backgroundColor = calculatePaceRGB(speed_kmh);
+  const backgroundColor = calculateSpeedRGB(speed_kmh);
   const imageSource = selectRunImage(speed_kmh);
   let paceFloat = calc_pace_from_kmh(speed_kmh, false);
   paceFloat = paceFloat < 0.05 ? 0.0 : paceFloat;
@@ -380,6 +388,7 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
     beforeText = time_diff ? time_diff.toFixed(0) + "sec" : "-";
   }
   const afterTextFontSize = afterText.length > 10 ? 10 : 20;
+  const imSizMul = 0.6;
 
   return (
     <View
@@ -390,28 +399,29 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
         left: left,
         justifyContent: 'flex-start',
         alignItems: 'center',
+        alignContent: 'center',
       }}
     >
       <Text style={{ bottom: circleSize / 8, textAlign: 'center', color: 'yellow', fontSize:12 }}>
           {beforeText}
         </Text>
-      <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
+      <View style={{ borderRadius: circleSize / 2, overflow: 'hidden', alignItems:'center' }}>
         <Image
           source={imageSource}
           style={{
             backgroundColor: backgroundColor,
-            width: circleSize,
-            height: circleSize,
+            width: circleSize*imSizMul,
+            height: circleSize*imSizMul,
             borderRadius: circleSize / 2,
             top: 0,
             marginBottom: 10,
           }}
         />
         <Text style={{ bottom: circleSize / 8, textAlign: 'center', color:"white", fontSize:20 }}>
-          {speed_kmh.toFixed(1)}kmh
+          {afterText}
         </Text>        
         <Text style={{ bottom: circleSize / 5.5, textAlign: 'center', color:"white", fontSize:afterTextFontSize }}>
-          {afterText}
+          {speed_kmh.toFixed(1)}kmh
         </Text>
       </View>
     </View>

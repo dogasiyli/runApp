@@ -16,19 +16,12 @@ interface SpeedScreenProps {
 }
 
 export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered_dist }) => {
-    const row_tops = ["35%", "90%"];
+    const row_tops = ["33%", "90%"];
     const pace_size = 0.13;
     const { current_location, 
         activeTime, passiveTime, totalTime,
         bool_update_locations, enable_update_locations,
-
-        simulationIndex,
-        simulationIsPaused, setSimulationIsPaused,
-        simulationSelected, setSimulationSelected,
-        simulationStepSelected, setSimulationStepSelected,
-        simulationGpsDataArray,
-
-        
+        simulationParams, setSimulationParams,    
         runState, setRunState,
       } = useAppState();
     //const esa = [1001, 60*1000+1001, 10*60*1000+1001, 61*60*1000+1001,90*61*60*1000+1001];
@@ -64,14 +57,14 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
                             />
     <Circle_Covered_Distance renderBool={true} covered_dist={covered_dist}
                       dist_type_totalT_lastF={dist_type_totalT_lastF} set_dist_type={set_dist_type_totalT_lastF}
-                      top="23%" left="45%"/>    
+                      top="23%" left="43%"/>    
 
     <Circle_Pace_Picked renderBool={true}
                         covered_dist={covered_dist} stDict={stDict}
                         dist_type_totalT_lastF={dist_type_totalT_lastF}
                         activeTime={activeTime}
                         pace_type_aveT_curF={pace_type_aveT_curF} set_pace_type_aveT_curF={set_pace_type_aveT_curF}
-                        top="10%" left="70%"/> 
+                        top="20%" left="70%"/> 
 
 
     <BT_Toggle_Image renderBool={true} 
@@ -103,7 +96,7 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
                           top={row_tops[1]} left="75%" beforeText={bool_timeF_distT ? 'meters' : 'seconds'}
                           size={pace_size}/>
 
-    {simulationIndex==-1 ?
+    {simulationParams.index==-1 ?
 
     <ControlsSpeedScreen renderBool={true} 
                          bool_update_locations={bool_update_locations} enable_update_locations={enable_update_locations}
@@ -113,12 +106,7 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
     :
       <ControlSimulationMenu renderBool={true}
           top="80%" left="0%"
-          simulationIndex={simulationIndex}
-          simulationIsPaused={simulationIsPaused} setSimulationIsPaused={setSimulationIsPaused}
-          simulationSelected={simulationSelected} setSimulationSelected={setSimulationSelected}
-          simulationGpsDataArray={simulationGpsDataArray}
-          simulationStepSelected={simulationStepSelected}
-          setSimulationStepSelected={setSimulationStepSelected}
+          simParams={simulationParams} setSimParams={setSimulationParams}
       />
     }
 

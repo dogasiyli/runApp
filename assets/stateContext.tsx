@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { INITIAL_MAP_DATA, INIT_PERMITS, INIT_POSITION, TIME_STAMPS } from '../assets/constants';
-import { GPS_Data } from '../assets/types';
+import { INITIAL_MAP_DATA, INIT_PERMITS, INIT_POSITION, INIT_SIMULATION_PARAMS, TIME_STAMPS } from '../assets/constants';
+import { GPS_Data, SimulationDict } from '../assets/types';
 import { IMapData } from './interface_definitions';
 
 export interface MoveableImageDict
@@ -56,20 +56,8 @@ interface StateContextType {
     mapData: IMapData;
     setMapData: React.Dispatch<React.SetStateAction<IMapData>>;
 
-    simulationIndex: number;
-    setSimulationIndex: React.Dispatch<React.SetStateAction<number>>;
-    simulationTimestampOffset: number;
-    setSimulationTimestampOffset: React.Dispatch<React.SetStateAction<number>>;
-    simulationInterval: NodeJS.Timer;
-    setSimulationInterval: React.Dispatch<React.SetStateAction<NodeJS.Timer>>;
-    simulationGpsDataArray: Array<GPS_Data>;
-    setSimulationGpsDataArray: React.Dispatch<React.SetStateAction<Array<GPS_Data>>>;
-    simulationIsPaused: boolean;
-    setSimulationIsPaused: React.Dispatch<React.SetStateAction<boolean>>;
-    simulationSelected: string;
-    setSimulationSelected: React.Dispatch<React.SetStateAction<string>>;
-    simulationStepSelected: number;
-    setSimulationStepSelected: React.Dispatch<React.SetStateAction<number>>;
+    simulationParams: SimulationDict;
+    setSimulationParams: React.Dispatch<React.SetStateAction<SimulationDict>>;
 }
 
 const StateContext = createContext<StateContextType | undefined>(undefined);
@@ -102,13 +90,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [passiveTime, setPassiveTime] = useState(0);
     const [totalTime, setTotalTime] = useState(0);
 
-    const [simulationIndex, setSimulationIndex] = useState(-1);
-    const [simulationTimestampOffset, setSimulationTimestampOffset] = useState(0);
-    const [simulationInterval, setSimulationInterval] = useState(null);
-    const [simulationGpsDataArray, setSimulationGpsDataArray] = useState([]);
-    const [simulationIsPaused, setSimulationIsPaused] = useState(true);
-    const [simulationSelected, setSimulationSelected] = useState('circleRun');
-    const [simulationStepSelected, setSimulationStepSelected] = useState(3000);
+    const [simulationParams, setSimulationParams] = useState<SimulationDict>(INIT_SIMULATION_PARAMS);
 
     const [runState, setRunState] = useState('initial');
 
@@ -141,17 +123,11 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 passiveTime, setPassiveTime,
                 totalTime, setTotalTime,
 
+                simulationParams, setSimulationParams,
                 runState, setRunState,
 
                 mapData, setMapData,
 
-                simulationIndex, setSimulationIndex,
-                simulationTimestampOffset, setSimulationTimestampOffset,
-                simulationInterval, setSimulationInterval,
-                simulationGpsDataArray, setSimulationGpsDataArray,
-                simulationIsPaused, setSimulationIsPaused,
-                simulationSelected, setSimulationSelected,
-                simulationStepSelected, setSimulationStepSelected,
             }}
     >
       {children}

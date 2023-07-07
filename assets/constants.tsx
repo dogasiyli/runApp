@@ -1,10 +1,19 @@
 import { LocationObject } from "expo-location";
-import { SpeedTimeCalced } from "./types";
+import { SimulationDict, SpeedTimeCalced } from "./types";
 import { IMapData } from "./interface_definitions";
 
 export const CALC_DISTANCES_FIXED = [200, 100, 50];
 export const CALC_TIMES_FIXED = [60, 30, 10];
 
+export const INIT_SIMULATION_PARAMS: SimulationDict = {
+    index: -1,
+    timestampOffset: 0,
+    interval: null,
+    gpsDataArray: [],
+    isPaused: true,
+    selected: 'BFFast',
+    stepSelected: 3000,
+};
 export const INIT_POSITION = {
     "coords": 
     {

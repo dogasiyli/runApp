@@ -1,14 +1,14 @@
 import React from 'react';
-import { TouchableHighlight, View } from 'react-native';
+import { TouchableHighlight, View, Text } from 'react-native';
 import { CircleImagePaceV1Props, CircleTimerTriangleProps, CoveredDistanceProps, PickedPaceProps } from '../../assets/interface_definitions';
 import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image, BT_Picker } from '../display/buttons';
 
-import { GPS_Data, stDict_hasKey } from '../../assets/types';
+import { SimulationDict, stDict_hasKey } from '../../assets/types';
 import { getReadableDuration } from '../../asyncOperations/fileOperations';
 import { CALC_TIMES_FIXED } from '../../assets/constants';
 import { calc_run_params } from '../../asyncOperations/utils';
 
-const toggle = (setFunction) => setFunction(previousState => !previousState);  
+const toggle = (setFunction) => setFunction((previousState:boolean) => !previousState);  
 
 export const Circle_Image_Pace_v1: React.FC<CircleImagePaceV1Props> = ({
   renderBool,
@@ -28,6 +28,9 @@ export const Circle_Image_Pace_v1: React.FC<CircleImagePaceV1Props> = ({
         ? last_or_best === 'last' ? stDict[_key].last_speed : stDict[_key].best_speed : 0;
     const time_diff = stDict_hasKey(stDict, _key)
         ? last_or_best === 'last' ? stDict[_key].last_time : stDict[_key].best_time : 0;
+
+    if (speed_kmh==0)
+        return;
 
   return (
     <Circle_Image_Pace
@@ -117,19 +120,22 @@ export const Circle_Covered_Distance: React.FC<CoveredDistanceProps> = ({
     const disp_val = covered_dist_use>10000 ? (covered_dist_use/1000).toFixed(2) + "km" : 
                      (covered_dist_use>1000 ? (covered_dist_use/1000).toFixed(2) + "km" : covered_dist_use.toFixed(0) + "m");
 
-    const after_text = "";//dist_type_totalT_lastF ? "All" : "Last";
+    const after_text = dist_type_totalT_lastF ? "Total Dist." : "Last Dist.";
 
     return (
-        <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
-            <TouchableHighlight underlayColor="white" style={{ padding: 10 }} 
+        <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, 
+                        justifyContent: 'flex-start', alignItems: 'center',
+                        alignContent:'center', alignSelf:'center' }}>
+            <TouchableHighlight underlayColor="transparent" style={{ padding: 35 }} 
                           onPress={() => toggle(set_dist_type)}>
                 <Circle_Text_Color renderBool={true} 
                             dispVal={disp_val}
                             floatVal={floatVal}
                             circleSize={0.14 + 0.015*Math.floor(Math.log10(covered_dist_use+0.001))}
                             backgroundColor={bgc} top={0} left={0}
-                            afterText={after_text} beforeText=''/>
+                            afterText='' beforeText=''/>
             </TouchableHighlight>
+            <Text style={{color:'white'}}>{after_text}</Text>
         </View>
     );
 };
@@ -150,9 +156,10 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
     // show the pace for the whole run or the last part
 
     const covered_dist_use = dist_type_totalT_lastF ? covered_dist.distance_all : covered_dist.distance_last;
-    const covered_dist_time = 0.001 + (dist_type_totalT_lastF ? activeTime : covered_dist.time_diff_last); 
+    const covered_dist_time = 0.001 + (dist_type_totalT_lastF ? activeTime/1000 : covered_dist.time_diff_last); 
     const [pace, kmh] = calc_run_params(covered_dist_use, covered_dist_time, false);
-    //console.log("Circle_Pace_Picked: ", pace, kmh, covered_dist_use, covered_dist_time)
+    const picked_pace_exp = pace_type_aveT_curF ? "Current" : (dist_type_totalT_lastF ? "Avg.All" : "Avg.Last")
+    //console.log("Circle_Pace_Picked: ", pace, kmh, "d:",covered_dist_use, "t:",covered_dist_time,picked_pace_exp)
     //calculate pace using activeTime and covered_dist_use
         
     // show the pace for last 30 seconds
@@ -161,8 +168,8 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
             
             <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
             
-            <TouchableHighlight underlayColor="pink" style={{ padding: 10 }} 
-                          onLongPress={() => toggle(set_pace_type_aveT_curF)}>
+            <TouchableHighlight underlayColor="transparent" style={{ padding: 50 }} 
+                          onPress={() => toggle(set_pace_type_aveT_curF)}>
             
             <Circle_Image_Pace_v1 
                 renderBool={stDict !== undefined}
@@ -170,13 +177,14 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
                 time_dist={'time'} last_or_best = {'last'}
                 top={"0%"} left={"0%"} beforeText={'seconds'}/>
             </TouchableHighlight>
+            <Text style={{marginTop:"0%", color:"#ffffff"}}>{picked_pace_exp}</Text>
             </View>
         )
     else
      return(
         <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
-        <TouchableHighlight underlayColor="pink" style={{ padding: 10 }} 
-                      onLongPress={() => toggle(set_pace_type_aveT_curF)}>
+        <TouchableHighlight underlayColor="transparent" style={{ padding: 50 }} 
+                      onPress={() => toggle(set_pace_type_aveT_curF)}>
             <Circle_Image_Pace
                 renderBool={renderBool || stDict !== undefined}
                 speed_kmh={kmh}
@@ -186,6 +194,7 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
                 beforeText={"meters"}
             />
         </TouchableHighlight>
+        <Text style={{marginTop:"0%", color:"#ffffff"}}>{picked_pace_exp}</Text>
         </View>
     );
 };
@@ -302,23 +311,14 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
     renderBool: boolean;
     top:string; 
     left:string;
-    simulationIndex: number;
-    simulationIsPaused: boolean;
-    setSimulationIsPaused:React.Dispatch<React.SetStateAction<boolean>>;
-    simulationSelected: string;
-    setSimulationSelected:React.Dispatch<React.SetStateAction<string>>;
-    simulationGpsDataArray: GPS_Data[];
-    simulationStepSelected: number;
-    setSimulationStepSelected:React.Dispatch<React.SetStateAction<number>>;
+    simParams: SimulationDict;
+    setSimParams:React.Dispatch<React.SetStateAction<SimulationDict>>;
   }
 export const ControlSimulationMenu: React.FC<ControlSimulationProps> = ({ 
   renderBool, 
   top, left, 
-  simulationIndex,
-  simulationIsPaused,setSimulationIsPaused,
-  simulationSelected, setSimulationSelected,
-  simulationGpsDataArray,
-  simulationStepSelected, setSimulationStepSelected,
+  simParams, 
+  setSimParams,
   }) => {
   if (!renderBool) {
     return null;
@@ -327,22 +327,30 @@ export const ControlSimulationMenu: React.FC<ControlSimulationProps> = ({
   const simStepToChoose = [250, 500, 750, 1000, 2000, 3000, 5000, 10000]
   return (  
     <>
-        <BT_Picker renderBool={simulationIndex == -1 }
-               pickableBool = {simulationIsPaused}
+        <BT_Picker renderBool={simParams.isPaused }
+               pickableBool = {simParams.index == -1 }
                top={top} left="0%" width="35%"
-               items={simToChoose} value={simulationSelected} setValue={setSimulationSelected}
-               belowText={`Len(${simulationGpsDataArray.length})`}
+               items={simToChoose} 
+               value={simParams.selected} 
+               setValue={(newVal:string) => setSimParams(prevParams => ({
+                ...prevParams, selected:newVal}))}
+               belowText={`Len(${simParams.gpsDataArray.length})`}
         />
         <BT_Picker renderBool={true}
-                pickableBool = {simulationIsPaused}
-                top={top} left={simulationIndex == -1 ? "63%" : "63%"} width="35%"
-                items={simStepToChoose} value={simulationStepSelected} setValue={setSimulationStepSelected}
+                pickableBool = {simParams.isPaused}
+                top={top} left={simParams.index == -1 ? "63%" : "63%"} width="35%"
+                items={simStepToChoose} value={simParams.stepSelected} 
+                setValue={(newVal:number) => setSimParams(prevParams => ({
+                    ...prevParams, stepSelected:newVal}))}                
                 itemLabelsAddLast='ms' fontSize={12}
                 belowText='Steps'
         />
         <BT_Toggle_Image renderBool={true} 
                         top={top} left="40%" size={0.20}
-                        bool_val={simulationIsPaused} set_bool_val={setSimulationIsPaused} 
+                        bool_val={simParams.isPaused}
+                        set_bool_val={(newVal:boolean) => setSimParams((prevParams) => ({ ...prevParams, isPaused: newVal }))}
+                        toggle_val={!simParams.isPaused}
+                        toggle_func={(newVal:boolean) => setSimParams((prevParams) => ({ ...prevParams, isPaused: newVal }))}                      
                         press_type="both"
                         true_img='simulate' false_img='wait'/>
         </>

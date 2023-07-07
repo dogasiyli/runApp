@@ -55,3 +55,13 @@ export const stDict_addEntry = async (_stDict:SpeedTimeCalced_Dict, _key: string
     setStDict((prevDict: SpeedTimeCalced_Dict) => ({ ...prevDict, [_key]: newEntry }));
 };
 
+export type SimulationDict = 
+{
+  index: number;
+  timestampOffset: number;
+  interval: NodeJS.Timer;
+  gpsDataArray: Array<GPS_Data>;
+  isPaused: boolean;
+  selected: string;
+  stepSelected: number;
+}

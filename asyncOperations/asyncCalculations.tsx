@@ -78,7 +78,7 @@ const update_best = async (stDictEntry:SpeedTimeCalced, interval_type: 'distance
       stDictEntry.best_time = stDictEntry.last_time;
       stDictEntry.best_speed = kmh;
       stDictEntry.best_pace = pace;
-      console.log("BRAVO:", interval, interval_type, "updated best of stDict (", kmh, ">bestSpeed))");
+      //console.log("BRAVO:", interval, interval_type, "updated best of stDict (", kmh, ">bestSpeed))");
     }
   }
   return stDictEntry;
@@ -94,39 +94,70 @@ export const updateCalcedResults = async (pos_array_diffs:object[], stDict:Speed
      await stDict_addEntry(stDict,_key,SPEED_TIME_CALCED_INIT,setStDict);
      //console.log("initialized ", _key, " in stDict");
   }
+
+  const skip_add_del_sec_lim = 4;
+  const plenX = Infinity; //69
+  const plenY = 0; //81
+
   const n = pos_array_diffs.length;
   let stDictEntry = stDict[_key];
   if (stDictEntry != undefined) {
     //console.log("111stDictEntry of key ", _key, " is ", stDictEntry);
     //console.log("n is ", n, "stDictEntry.last_dist:", stDictEntry.last_dist, "stDictEntry.last_time:", stDictEntry.last_time, "stDictEntry.last_end:", stDictEntry.last_end);
-    
+    if (_key==="10s" && pos_array_diffs.length<plenY && stDictEntry.last_speed>0)
+    {
+      console.log("111pos_array_diffs ", pos_array_diffs.length);
+      console.log("111stDictEntry of key ", _key, " is ", stDictEntry);
+      console.log("used pos_array_diffs:\n", pos_array_diffs.slice(stDictEntry.last_begin,stDictEntry.last_end))
+    }
     while (stDictEntry.last_end < n-1 && ((interval_type === "distance" ? stDictEntry.last_dist : stDictEntry.last_time) < interval)) {
-      stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
-      stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];
+      if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_end][1])
+      {
+        stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
+        stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];
+      }
+      //else
+      //  console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%SKIPPING POS ARR ENTRY1 : ", stDictEntry.last_end)
       stDictEntry.last_end++;
-      //console.log("222stDictEntry of key ", _key, " is ", stDictEntry);
+      if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
+        console.log("222stDictEntry of key ", _key, " is ", stDictEntry);
     }
     stDictEntry = await update_best(stDictEntry, interval_type, interval);
-    //console.log("333stDictEntry of key ", _key, " is ", stDictEntry);
+    if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
+      console.log("333stDictEntry of key ", _key, " is ", stDictEntry);
     while (stDictEntry.best_time > 0 && stDictEntry.last_end < n-1) {
       // if interval is less than what is accumulated
       // then we need to add the next point to the interval
       // else we need to remove the first point from the interval
+
+      //ADD THE NEXT POINT
       if ((interval_type === "distance" ? stDictEntry.last_dist : stDictEntry.last_time) < interval) {
         stDictEntry.last_end++;
-        stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
-        stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];  
-        //console.log("444stDictEntry of key ", _key, " is ", stDictEntry);
+        if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_end][1])
+        {
+          stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
+          stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];    
+        }
+        //else
+        //  console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%SKIPPING POS ARR ENTRY2 : ", stDictEntry.last_end)
+        if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
+          console.log("444stDictEntry of key ", _key, " is ", stDictEntry);
       }
+      //REMOVE THE FIRST POINT
       else {
         stDictEntry.last_begin++;
-        stDictEntry.last_dist -= pos_array_diffs[stDictEntry.last_begin-1][0];
-        stDictEntry.last_time -= pos_array_diffs[stDictEntry.last_begin-1][1];  
-        //console.log("555stDictEntry of key ", _key, " is ", stDictEntry);
+        if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_begin-1][1])
+        {
+          stDictEntry.last_dist -= pos_array_diffs[stDictEntry.last_begin-1][0];
+          stDictEntry.last_time -= pos_array_diffs[stDictEntry.last_begin-1][1];  
+        }
+        //else
+        //  console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%SKIPPING POS ARR ENTRY3 : ", stDictEntry.last_begin-1)
+        if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
+          console.log("555stDictEntry of key ", _key, " is ", stDictEntry);
       }
       stDictEntry  = await update_best(stDictEntry, interval_type, interval);
     }
     await stDict_addEntry(stDict,_key,stDictEntry,setStDict);
-    //console.log("666stDict with", _key, " is ", stDict);
   }
 };
