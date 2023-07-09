@@ -1,7 +1,7 @@
 import { Text, Image, TouchableHighlight, View, PanResponder, Vibration, Dimensions } from 'react-native';
 import { Switch } from 'react-native-switch';  
 import { useAppState } from '../../assets/stateContext';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { style_movable } from '../../sheets/styles';
 import { format_time_diff, calc_pace_from_kmh } from '../../asyncOperations/utils';
@@ -14,6 +14,11 @@ import { Picker } from '@react-native-picker/picker';
 const button_images = {
   "moveable_default": require('../../assets/pngs/defaultMoveable.png'),
   "moveable_selected": require('../../assets/pngs/selectedMoveable.png'),
+  "aubergine" : require('../../assets/map_styles/aubergine.png'),
+  "dark" : require('../../assets/map_styles/dark.png'),
+  "silver" : require('../../assets/map_styles/silver.png'),
+  "standard" : require('../../assets/map_styles/standard.png'),
+  "retro" : require('../../assets/map_styles/retro.png'),
 }
 
 const run_images = {
@@ -39,7 +44,9 @@ const speed_screen_images = {
   "stats": require('../../assets/pngs/stats.png'),
   "simulate": require('../../assets/pngs/simulate.png'),
   "wait": require('../../assets/pngs/wait.png'),
+  "save": require('../../assets/pngs/save.png'),
 }
+
 const run_image_ident = {
   "run00": "standing",
   "run01": "walk",
@@ -580,7 +587,203 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     );
   };
 
+  interface FunctionalImageProps {
+    renderBool: boolean;
+    top:string; 
+    left:string;
+    size:number;
+    img_src:string;
+    func: (...args: any[]) => void;
+    params: any[];
+    press_type?:string;
+    underlayColor?:string;
+    belowText?:string;
+  }
+  export const BT_Functional_Image: React.FC<FunctionalImageProps> = ({ 
+    renderBool, 
+    top, left, size,
+    img_src,
+    func, params,
+    press_type="long", underlayColor="transparent",
+    belowText=undefined
+    }) => {
+    if (!renderBool) {
+      return null;
+    }
+    const { width } = Dimensions.get('window');
+    const circleSize = width * size; // Adjust the percentage as needed
+    const bgc = 'transparent';
+    const s = belowText===undefined ? img_src : belowText;
+    const imageSource = speed_screen_images[img_src];
+    //params.forEach((param, index) => {
+    //  console.log(`Param ${index + 1} length: ${param.length}`);
+    //});
+  
+    return (
+      <View style={{ flex: 1, position: 'absolute', top:top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+        <TouchableHighlight underlayColor={"transparent"} 
+                            onPress={press_type === "short" || press_type === "both" ? () => func(params) : undefined}
+                            onLongPress={press_type === "long" || press_type === "both" ? () => func(params) : undefined}>
+        <View style={{backgroundColor:underlayColor, borderRadius: circleSize / 2, overflow: 'hidden', alignSelf:"center", alignItems:"center" }}>
+          <Image
+            source={imageSource}
+            style={{
+              backgroundColor: bgc,
+              width: circleSize,
+              height: circleSize,
+              borderRadius: circleSize / 4,
+              top: 0,
+              marginBottom: 0,
+            }}
+          /> 
+        </View>
+        </TouchableHighlight>
+        <View style={{backgroundColor:"transparent", borderRadius: circleSize / 2, overflow: 'hidden', alignSelf:"center", alignItems:"center" }}>
+            <Text
+              disabled={false}
+              style={{ backgroundColor:bgc, width: circleSize, height: circleSize, 
+                       textAlign: 'center', lineHeight: circleSize/2, color:"yellow", fontSize:circleSize/6,
+                       borderRadius: circleSize / 4 }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {s.toUpperCase()}
+            </Text>
+          </View>
+      </View>
+    );
+  };
 
+
+  interface SwitchingImagesProps {
+    renderBool: boolean;
+    top: string;
+    left: string;
+    size: number;
+    possible_images: string[];
+    setNewImg: (newImg: string) => void;
+    im_current: string;
+    press_type?: string;
+    underlayColor?: string;
+    belowText?: string;
+  }
+  
+  export const BT_SwitchingImages: React.FC<SwitchingImagesProps> = ({
+    renderBool,
+    top,
+    left,
+    size,
+    possible_images, setNewImg,
+    im_current,
+    press_type = "long",
+    underlayColor = "transparent",
+    belowText = undefined,
+  }) => {
+    if (!renderBool) {
+      return null;
+    }
+    const { width } = Dimensions.get("window");
+    const circleSize = width * size; // Adjust the percentage as needed
+    const bgc = "transparent";
+    const im_id=possible_images.indexOf(im_current);
+    const s = belowText === undefined ? possible_images[im_id] : belowText;
+    const imageSource = button_images[possible_images[im_id]];
+
+    console.log(`im_id: ${im_id}, im_current: ${im_current}, possible_images[im_id]: ${possible_images[im_id]}`);
+  
+    const handlePress = () => {
+      // If press_type is "both" or "short", increment the im_id
+      console.log(`handlePress: ${press_type}, im_id: ${im_id}`);
+      if (press_type === "both" || press_type === "short") {
+        const nextImId = (im_id + 1) % possible_images.length;
+        // Update the im_id state to switch to the next image
+        const nextImg = possible_images[nextImId];
+        console.log(`nextImId: ${nextImId}, nextImg: ${nextImg}`);
+        setNewImg(nextImg);
+      }
+    };
+  
+    const handleLongPress = () => {
+      // If press_type is "both" or "long", decrement the im_id
+      console.log(`handleLongPress: ${press_type}, im_id: ${im_id}`);
+      if (press_type === "both" || press_type === "long") {
+        const prevImId = (im_id - 1 + possible_images.length) % possible_images.length;
+        // Update the im_id state to switch to the previous image
+        const prevImage = possible_images[prevImId];
+        console.log(`prevImId: ${prevImId}, prevImage: ${prevImage}`);
+        setNewImg(prevImage);
+      }
+    };
+  
+    return (
+      <View
+        style={{
+          flex: 1,
+          position: "absolute",
+          top: top,
+          left: left,
+          justifyContent: "flex-start",
+          alignItems: "center",
+        }}
+      >
+        <TouchableHighlight
+          underlayColor={underlayColor}
+          onPress={handlePress}
+          onLongPress={handleLongPress}
+        >
+          <View
+            style={{
+              backgroundColor: underlayColor,
+              borderRadius: circleSize / 2,
+              overflow: "hidden",
+              alignSelf: "center",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              source={imageSource}
+              style={{
+                backgroundColor: bgc,
+                width: circleSize,
+                height: circleSize,
+                borderRadius: circleSize / 4,
+                top: 0,
+                marginBottom: 0,
+              }}
+            />
+          </View>
+        </TouchableHighlight>
+        <View
+          style={{
+            backgroundColor: "transparent",
+            borderRadius: circleSize / 2,
+            overflow: "hidden",
+            alignSelf: "center",
+            alignItems: "center",
+          }}
+        >
+          <Text
+            disabled={false}
+            style={{
+              backgroundColor: bgc,
+              width: circleSize,
+              height: circleSize,
+              textAlign: "center",
+              lineHeight: circleSize / 2,
+              color: "yellow",
+              fontSize: circleSize / 6,
+              borderRadius: circleSize / 4,
+            }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {s.toUpperCase()}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+   
   // interface BT_Picker_Props {
   //   renderBool: boolean;
   //   top:string; 

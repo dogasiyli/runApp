@@ -24,6 +24,7 @@ import { handleTimerInterval, } from '../asyncOperations/utils';
 import { CoveredDistance, SpeedTimeCalced_Dict } from '../assets/types';
 import { updateLocationHistory, updatePosDict, updateDistances, updateCalcedResults } from '../asyncOperations/asyncCalculations';
 import { CALC_TIMES_FIXED, CALC_DISTANCES_FIXED } from '../assets/constants';
+import { resetSimulation } from '../asyncOperations/resetOperations';
 
 export function Screen_GPS_Debug({route}) {
   const ALLOWED_COORD_ACCURACY = 15;
@@ -58,7 +59,8 @@ export function Screen_GPS_Debug({route}) {
 
           mapData, setMapData,
           simulationParams, setSimulationParams,
-          runState,
+          runState, setRunState,
+          set_location_history, set_pos_array_kalman, set_pos_array_diffs
         } = useAppState();
   const prevBoolRecordLocations = useRef(bool_record_locations);
   const prevBoolUpdateLocations = useRef(bool_update_locations);      
@@ -307,7 +309,7 @@ export function Screen_GPS_Debug({route}) {
     // useEffect appending updated location to arr_location_history
     useEffect(() => {
       const fetchData = async () => {
-        console.log("selectedSimulation changed to(", simulationParams.selected, "), simulationParams.index(", simulationParams.index ,")")
+        //console.log("selectedSimulation changed to(", simulationParams.selected, "), simulationParams.index(", simulationParams.index ,")")                 
           if (simulationParams.index=== -1) {
             console.log("Loading simulation data:", simulationParams.selected);
             // Parse the JSON data from the file

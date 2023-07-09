@@ -21,6 +21,7 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
     const { current_location, 
         activeTime, passiveTime, totalTime,
         bool_update_locations, enable_update_locations,
+        arr_location_history, pos_array_diffs,
         simulationParams, setSimulationParams,    
         runState, setRunState,
       } = useAppState();
@@ -89,6 +90,7 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets,stDict, covered
 
     <ControlsSpeedScreen renderBool={true} 
                          bool_update_locations={bool_update_locations} enable_update_locations={enable_update_locations}
+                         arr_location_history={arr_location_history} pos_array_diffs={pos_array_diffs}
                          runState={runState} setRunState={setRunState} current_location={current_location}
                          top={80}
     />

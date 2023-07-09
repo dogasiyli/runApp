@@ -110,20 +110,48 @@ export const saveToFile = async (dictionary_to_save:object, filename:string = un
   }
 };
 
-
-export const saveToFile_multiple = async (arrayOfDictionaries: object[]) => {
+export const saveToFile_multiple = async (arrayOfDictionaries: object[][], asJSON:boolean=false) => {
   try {
     const parentUri = FileSystem.documentDirectory;
     const formattedDateTime = getFormattedDateTime();
 
     for (let i = 0; i < arrayOfDictionaries.length; i++) {
       const dictionary_to_save = arrayOfDictionaries[i];
-      const filename = `runPositions_${formattedDateTime}_${i + 1}.txt`;
+      const filename = `runPositions_${formattedDateTime}_${i + 1}.${asJSON ? 'json' : 'txt'}`;
       const fileUri = parentUri + filename;
-
-      await saveToFile(dictionary_to_save, filename, fileUri);
+      console.log("save:", filename, " of dict with len:", dictionary_to_save?.length, asJSON ? 'json' : 'txt');
+      console.log("dictionary_to_save:", dictionary_to_save);
+      asJSON ? await saveToJson(dictionary_to_save, filename, fileUri) : await saveToFile(dictionary_to_save, filename, fileUri);
     }
     alert(arrayOfDictionaries.length.toFixed(0) + " files have been saved successfully.");
+  } catch (error) {
+    // If an error occurred, show it
+    alert(`An error occurred: ${error}`);
+  }
+};
+
+const saveToJson = async (arrayOfDicts: object[], filename: string = undefined, fileUri: string = undefined) => {
+  // Create a new file uri if filename and fileUri are not provided
+  if (filename === undefined && fileUri === undefined) {
+    const formattedDateTime = getFormattedDateTime();
+    filename = `runPositions_${formattedDateTime}.json`;
+    const parentUri = FileSystem.documentDirectory;
+    fileUri = parentUri + filename;
+    console.log("parentUri:", parentUri);
+    console.log("filename:", filename);
+    console.log("fileUri:", fileUri);
+  }
+
+  console.log("saveToJson - filename:", filename);
+
+  // Convert the array of dictionaries to string
+  const stringifiedData = JSON.stringify(arrayOfDicts);
+
+  try {
+    // Write the data to the file
+    await FileSystem.writeAsStringAsync(fileUri, stringifiedData);
+    alert(`Data has been saved as JSON to: ${fileUri}`);
+    await saveAndroidFile(fileUri, filename);
   } catch (error) {
     // If an error occurred, show it
     alert(`An error occurred: ${error}`);
@@ -140,12 +168,15 @@ const saveAndroidFile = async (fileUri, fileName) => {
     if (!permissions.granted) {
       return;
     }
-    console.log("saveAndroidFile-permissions:", permissions);
+    console.log("saveAndroidFile-permissions2:", permissions);
     try {
+      console.log("saveAndroidFile-fileName:", fileName);
+      const mimeType = fileName.endsWith('.json') ? 'application/json' : 'text/plain';
+      console.log("saveAndroidFile-mimeType:", mimeType);
       await StorageAccessFramework.createFileAsync(
         permissions.directoryUri,
         fileName,
-        "text/plain"
+        mimeType
       )
         .then(async (uri) => {
           await FileSystem.writeAsStringAsync(uri, fileString, {

@@ -148,7 +148,6 @@ export interface IMapRegion{
 
 export interface IMapViewProps {
   detailValue: number;
-  mapTypeInt: number;
   mapTypeString: string;
 }
 

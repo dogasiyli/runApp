@@ -1,10 +1,10 @@
 import React from 'react';
 import { TouchableHighlight, View, Text } from 'react-native';
 import { CircleImagePaceV1Props, CircleTimerTriangleProps, CoveredDistanceProps, PickedPaceProps } from '../../assets/interface_definitions';
-import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image, BT_Picker } from '../display/buttons';
+import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image, BT_Picker, BT_Functional_Image } from '../display/buttons';
 
 import { SimulationDict, stDict_hasKey } from '../../assets/types';
-import { getReadableDuration } from '../../asyncOperations/fileOperations';
+import { getReadableDuration, saveToFile_multiple } from '../../asyncOperations/fileOperations';
 import { CALC_TIMES_FIXED } from '../../assets/constants';
 import { calc_run_params } from '../../asyncOperations/utils';
 
@@ -91,6 +91,7 @@ export const Circle_Timer_Triangle: React.FC<CircleTimerTriangleProps> = ({
                                 dispVal={getReadableDuration(activeTime)}
                                 circleSize={circleW}
                                 backgroundColor="rgb(0,100,0)" 
+                                textColor='white'
                                 top={`${top_act_time}%`} left={`${left_act_time}%`}
                                 afterText='' beforeText=''/>
             {/*passive time*/}
@@ -98,6 +99,7 @@ export const Circle_Timer_Triangle: React.FC<CircleTimerTriangleProps> = ({
                                 dispVal={getReadableDuration(passiveTime)}
                                 circleSize={circleW}
                                 backgroundColor="#505050" 
+                                textColor='white'
                                 top={`${top_pas_time}%`} left={`${left_pas_time}%`}
                                 afterText='' beforeText=''/>
         </>
@@ -133,6 +135,7 @@ export const Circle_Covered_Distance: React.FC<CoveredDistanceProps> = ({
                             floatVal={floatVal}
                             circleSize={0.14 + 0.015*Math.floor(Math.log10(covered_dist_use+0.001))}
                             backgroundColor={bgc} top={0} left={0}
+                            textColor='white'
                             afterText='' beforeText=''/>
             </TouchableHighlight>
             <Text style={{color:'white'}}>{after_text}</Text>
@@ -203,6 +206,7 @@ interface ControlsSpeedScreenProps {
     renderBool: boolean;
     bool_update_locations:boolean;
     enable_update_locations: React.Dispatch<React.SetStateAction<boolean>>;
+    arr_location_history, pos_array_diffs,
     current_location: object;
     runState: string;
     setRunState: React.Dispatch<React.SetStateAction<string>>;
@@ -211,6 +215,7 @@ interface ControlsSpeedScreenProps {
 export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
     renderBool,
     bool_update_locations, enable_update_locations,
+    arr_location_history, pos_array_diffs,
     current_location, 
     runState, setRunState,
     top,
@@ -227,8 +232,8 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
 
     //console.log("current_location:", current_location)
 
-    const leftD = {"gps":2,"camera":0,"run":1,"finish":2,"share":2,"stats":1,};
-    const sizeD = {"gps":1,"camera":runState === "stopped" ? 2: 1,"run":2,"finish":1,"share":1,"stats":1,};
+    const leftD = {"gps":2,"camera":0,"save":0,"run":1,"finish":2,"share":2,"stats":1,};
+    const sizeD = {"gps":1,"camera":runState === "stopped" ? 2: 1,"save":2,"run":2,"finish":1,"share":1,"stats":1,};
 
     const gps_color = bool_update_locations ? (current_location["coords"]["accuracy"]>10 ? "orange" : "cyan") : "red";
     const run_color = (runState === "initial" || runState === "paused") ? "cyan" : (runState === "running" ? "yellow" : "pink");
@@ -238,6 +243,7 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
     const underlayColor = {"gps":gps_color,
                            "camera":"transparent",
                            "run":run_color,
+                           "save":"red",
                            "finish":"red",
                            "share":"transparent",
                            "stats":"transparent",};
@@ -284,12 +290,13 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
     if (runState=="finish")
         return (
             <>
-            <BT_Toggle_Image renderBool={true} 
-                top={(top+top_adds[sizeD["camera"]]).toFixed(1)+'%'} 
-                left={(lefts[leftD["camera"]]+left_adds[sizeD["camera"]]).toFixed(1)+'%'} 
-                size={sizes[sizeD["camera"]]}
-                bool_val={true} set_bool_val={undefined} underlayColor={underlayColor["camera"]}
-                true_img='camera' false_img='camera' press_type="none"/>
+            <BT_Functional_Image renderBool={true} 
+                top={(top+top_adds[sizeD["save"]]).toFixed(1)+'%'} 
+                left={(lefts[leftD["save"]]+left_adds[sizeD["save"]]).toFixed(1)+'%'} 
+                size={sizes[sizeD["save"]]}
+                underlayColor={underlayColor["save"]}
+                img_src='save' press_type="both"
+                func={saveToFile_multiple} params={[arr_location_history, pos_array_diffs]}/>
             <BT_Toggle_Image renderBool={true} 
                 top={(top+top_adds[sizeD["stats"]]).toFixed(1)+'%'} 
                 left={(lefts[leftD["stats"]]+left_adds[sizeD["stats"]]).toFixed(1)+'%'} 
