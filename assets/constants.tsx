@@ -57,8 +57,20 @@ export const SPEED_TIME_CALCED_INIT:SpeedTimeCalced = {
     "best_pace": 0,
 }
 
+export const latDelta_min = 0.005;
+export const lonDelta_min = 0.0010;
+
 export const INITIAL_MAP_DATA: IMapData = {
     locations: [],
+    polyGroup: [],
+    loc_boundaries: {
+        lat_min: Infinity,
+        lat_max: -Infinity,
+        lon_min: Infinity,
+        lon_max: -Infinity,
+        lat_delta: latDelta_min,
+        lon_delta: lonDelta_min,
+    },
     initial_region: {
         latitude: 0.0,
         longitude: 0.0,
@@ -73,7 +85,6 @@ export const INITIAL_MAP_DATA: IMapData = {
     },
       viewProps: {
       detailValue: 3,
-      mapTypeInt: 1,
       mapTypeString: 'dark',
     },
   };

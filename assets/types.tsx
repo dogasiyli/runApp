@@ -19,6 +19,7 @@ export type GPS_Data = {
       "speed": number
   }, 
   "mocked"?: boolean, 
+  "activityType"?: string,
   "timestamp": number
 }
 

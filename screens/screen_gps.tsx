@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 
 import { getPermits, useLocationForeground, registerBackgroundFetchAsync } from '../asyncOperations/requests';
 
-import { INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND } from '../assets/constants';
+import { INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND, latDelta_min, lonDelta_min } from '../assets/constants';
+import { IMapBoundaries, IMapRegion } from '../assets/interface_definitions';
 
 
 import { getFormattedDateTime } from '../asyncOperations/fileOperations';
@@ -18,7 +19,7 @@ import { useAppState } from '../assets/stateContext';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../asyncOperations/requests';
-import { isLocationFarEnough, on_new_gps_data } from '../asyncOperations/gpsOperations';
+import { isLocationFarEnough, isFurtherThan, on_new_gps_data } from '../asyncOperations/gpsOperations';
 import { handleTimerInterval, } from '../asyncOperations/utils';
 
 import { CoveredDistance, SpeedTimeCalced_Dict } from '../assets/types';
@@ -281,28 +282,115 @@ export function Screen_GPS_Debug({route}) {
           { latitude, longitude },
           mapData.locations
         );
+        const set_new_bounds = async(newBounds:IMapBoundaries, latitude, longitude) => {
+          newBounds.lat_max = Math.max(newBounds.lat_max, latitude);
+          newBounds.lat_min = Math.min(newBounds.lat_min, latitude);
+          newBounds.lon_max = Math.max(newBounds.lon_max, longitude);
+          newBounds.lon_min = Math.min(newBounds.lon_min, longitude);
+          newBounds.lat_delta = Math.max(newBounds.lat_max - newBounds.lat_min, latDelta_min);
+          newBounds.lon_delta = Math.max(newBounds.lon_max - newBounds.lon_min, lonDelta_min);   
+          return newBounds;       
+        }
+        const set_new_region = async(newRegion:IMapRegion, newBounds:IMapBoundaries, latitude:number, longitude:number) => {
+          //newRegion.latitudeDelta = 2*newBounds.lat_delta;
+          //newRegion.longitudeDelta = 2*newBounds.lon_delta;
+          newRegion.latitude = latitude;
+          newRegion.longitude = longitude;      
+          return newRegion;     
+        }
         const isToBeAdded = bool_record_locations || !simulationParams.isPaused;
   
+        let newBounds = {...mapData.loc_boundaries};
+        let newRegion = {
+          ...mapData.region,
+          latitude: latitude,
+          longitude: longitude,
+        };
         if (isFarEnough && isToBeAdded) {
+          // add the location to the map
+
+          newBounds = await set_new_bounds(newBounds, latitude, longitude);
+          console.log("newBounds:", newBounds);
+
+          newRegion = await set_new_region(newRegion, newBounds, latitude, longitude);
+          console.log("newRegion:", newRegion); 
+          
+          //before updating the map, update polyGroup too
+
+
           setMapData((prevState) => ({
             ...prevState,
             locations: [...prevState.locations, { latitude, longitude }],
+            loc_boundaries: newBounds,
+            region: newRegion,
           }));
         }
-  
-        setMapData((prevMapData) => ({
-          ...prevMapData,
-          region: {
-            ...prevMapData.region,
-            latitude,
-            longitude,
-          },
-        }));
       };
   
       checkLocation();
     }
   }, [current_location]);
+
+  useEffect(() => {
+    //console.log("mapData.locations.length changed to:", mapData.locations.length);
+    if (mapData.locations.length < 2) 
+      return;
+    
+    const isTooFar = async (polyGroupCount:number) => {
+      //console.log("---isTooFar---polyGroupCount(", polyGroupCount, ')');
+      if (polyGroupCount<1) return false;
+
+      //console.log("---isTooFar---isFurtherThan:polyGroupCount(", polyGroupCount, '):', mapData.polyGroup[polyGroupCount-1].to, mapData.locations.length);
+      const tooFar2BeInTheSameGroup = await isFurtherThan(
+        mapData.locations[mapData.polyGroup[polyGroupCount-1].to],
+        mapData.locations, 35
+      );
+      //console.log("---isTooFar---tooFar2BeInTheSameGroup:polyGroupCount(", polyGroupCount, '):', tooFar2BeInTheSameGroup);
+
+      return tooFar2BeInTheSameGroup;
+    };
+
+
+    const runAsyncStuff = async () => {
+      const polyGroupCount =  mapData.polyGroup.length;
+      const tooFar2BeInTheSameGroup = await isTooFar(polyGroupCount);
+      const map_loc_last = mapData.locations.length-1;
+      //TODO check if the activity type is passed from current location etc.
+      const known_activityType_last =  mapData.locations[map_loc_last-1]?.activityType ? mapData.locations[map_loc_last-1]?.activityType : undefined;
+      const known_activityType_curr =  mapData.locations[map_loc_last]?.activityType ? mapData.locations[map_loc_last]?.activityType : undefined;
+      let last_activityType =  polyGroupCount>0 ? mapData.polyGroup[polyGroupCount-1].actType : (known_activityType_last===undefined ? "run": known_activityType_last);
+      let curr_activityType =  known_activityType_curr===undefined ? "run": known_activityType_curr;
+
+      if (mapData.locations.length == 2) {
+        //console.log("mapData.locations.length == 2")
+        setMapData((prevState) => ({
+          ...prevState,
+          polyGroup: [...prevState.polyGroup, { from: 0, to: 1, actType: curr_activityType }],
+        }));
+        //console.log("11111111-BEG-mapData.polyGroup:\n", mapData.polyGroup);
+        return;
+      }
+
+      curr_activityType = tooFar2BeInTheSameGroup ? "pause" : curr_activityType;
+      //console.log("tooFar2BeInTheSameGroup:", tooFar2BeInTheSameGroup, ", curr_activityType:", curr_activityType, ", last_activityType:", last_activityType);
+      if (curr_activityType==last_activityType)
+      {
+        mapData.polyGroup[polyGroupCount-1].to = map_loc_last;
+        //console.log("2222222-INC-mapData.polyGroup:\n", mapData.polyGroup);
+      }
+      else
+      {
+        setMapData((prevState) => ({
+          ...prevState,
+          polyGroup: [...prevState.polyGroup, { from: map_loc_last-1, to: map_loc_last, actType: curr_activityType }],
+        }));
+        //console.log("33333333-APP-mapData.polyGroup:\n", mapData.polyGroup);
+      }
+    }
+
+    runAsyncStuff();
+ 
+  }, [mapData.locations]);
   
 
   //SIMULATION USE_EFFECTS

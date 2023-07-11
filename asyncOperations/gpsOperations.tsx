@@ -70,3 +70,23 @@ export const isLocationFarEnough = async (curLoc:IMapLocation, locations:Array<I
 
   return true; // Current location is far enough from all locations in the array
 };
+
+export const isFurtherThan = async (curLoc: IMapLocation, locations: Array<IMapLocation>, distanceToCheck: number) => {
+  if (!locations || locations.length === 0) {
+    console.log("NO LOCATIONS YET");
+    return false;
+  }
+
+  const lastLoc = locations[locations.length - 1];
+  const distance = await calc_geodesic(
+    { lat: curLoc.latitude, lon: curLoc.longitude },
+    { lat: lastLoc.latitude, lon: lastLoc.longitude },
+    false
+  );
+
+  if (distance && distance.s_geo_len > distanceToCheck) {
+    //console.log("isFurtherThan? distance > distanceToCheck:", distance.s_geo_len, distanceToCheck);
+    return true;
+  }
+  return false;
+};

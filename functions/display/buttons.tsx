@@ -689,7 +689,7 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     const s = belowText === undefined ? possible_images[im_id] : belowText;
     const imageSource = button_images[possible_images[im_id]];
 
-    console.log(`im_id: ${im_id}, im_current: ${im_current}, possible_images[im_id]: ${possible_images[im_id]}`);
+    //console.log(`im_id: ${im_id}, im_current: ${im_current}, possible_images[im_id]: ${possible_images[im_id]}`);
   
     const handlePress = () => {
       // If press_type is "both" or "short", increment the im_id

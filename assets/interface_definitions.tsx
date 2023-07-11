@@ -137,6 +137,7 @@ export interface PickedPaceProps {
 export interface IMapLocation {
   latitude: number;
   longitude: number;
+  activityType?: string;
 }
 
 export interface IMapRegion{
@@ -146,6 +147,21 @@ export interface IMapRegion{
   longitudeDelta: number;
 }
 
+export interface IMapBoundaries{
+  lat_min: number;
+  lat_max: number;
+  lon_min: number;
+  lon_max: number;
+  lat_delta: number;
+  lon_delta: number;
+}
+
+export interface IMapPolyGroupMember{
+  from: number;
+  to: number;
+  actType: string;
+}
+
 export interface IMapViewProps {
   detailValue: number;
   mapTypeString: string;
@@ -153,6 +169,8 @@ export interface IMapViewProps {
 
 export interface IMapData {
   locations: Array<IMapLocation>;
+  polyGroup: Array<IMapPolyGroupMember>;
+  loc_boundaries: IMapBoundaries;
   initial_region: IMapRegion;
   region: IMapRegion;
   viewProps: IMapViewProps;
