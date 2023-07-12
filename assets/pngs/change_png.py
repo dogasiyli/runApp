@@ -89,8 +89,12 @@ if __name__ == "__main__":
         sys.exit(1)
     
     print(len(sys.argv))
+    for i in range(len(sys.argv)):
+        print(i,sys.argv[i])
     image_path = sys.argv[1]
     pad_percent = float(sys.argv[2])
-    replace = False if len(sys.argv) < 4 else bool(sys.argv[3])
-    save_base = False if len(sys.argv) < 5 else bool(sys.argv[4])
+    replace = sys.argv[3].lower() == "true" if len(sys.argv) > 3 else False
+    save_base = sys.argv[4].lower() == "true" if len(sys.argv) > 4 else False
+
+    print("image_path:", image_path, ", pad_percent:", pad_percent, ", replace:", replace, ", save_base:", save_base)
     change_png(image_path, pad_percent, replace, save_base)

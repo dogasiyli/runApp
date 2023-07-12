@@ -1,4 +1,4 @@
-import { OfflineLocationData } from "../assets/constants";
+import { FIXED_DISTANCES, OfflineLocationData } from "../assets/constants";
 import { IMapLocation } from "../assets/interface_definitions";
 import { calc_geodesic } from "./utils";
 
@@ -42,7 +42,7 @@ export const on_new_gps_data = (data, set_current_location) => {
 }
 
 export const isLocationFarEnough = async (curLoc:IMapLocation, locations:Array<IMapLocation>) => {
-  const distanceThreshold = 20; // Minimum distance threshold in meters
+  const distanceThreshold = FIXED_DISTANCES["MAP_DATA_ADD"]; // Minimum distance threshold in meters
 
   if (!locations || locations.length===0)
   {
@@ -89,4 +89,25 @@ export const isFurtherThan = async (curLoc: IMapLocation, locations: Array<IMapL
     return true;
   }
   return false;
+};
+
+export const animate_point=async(runState, simulationParams, mapData, mapRef, current_location)=>{
+  const ca = mapData.viewProps.centerAt;
+  console.log("animate_point, runState:", runState, ", simulationParams:", simulationParams.isPaused)
+  if (simulationParams.isPaused || runState === "paused") 
+  {
+    //console.log("mapRef.current:\n", mapRef.current)
+    //return;
+  }
+  if (mapRef !== null && mapRef.current !== null && mapData.locations.length > 0)
+  {  
+    mapRef.current.animateCamera({
+      heading:current_location.coords.heading,
+      zoom: mapData.viewProps.zoomLevel,
+      center: {
+        latitude:ca=='runner' ? current_location.coords.latitude : 0.5*(mapData.loc_boundaries.lat_max + mapData.loc_boundaries.lat_min),
+        longitude:ca=='runner' ? current_location.coords.longitude : 0.5*(mapData.loc_boundaries.lon_max + mapData.loc_boundaries.lon_min),
+      },
+      pitch: 0,})
+  }
 };

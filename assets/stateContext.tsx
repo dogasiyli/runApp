@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useRef, useState } from 'react';
 import { INITIAL_MAP_DATA, INIT_PERMITS, INIT_POSITION, INIT_SIMULATION_PARAMS, TIME_STAMPS } from '../assets/constants';
 import { GPS_Data, SimulationDict } from '../assets/types';
 import { IMapData } from './interface_definitions';
+import MapView from 'react-native-maps';
 
 export interface MoveableImageDict
 {
@@ -54,6 +55,7 @@ interface StateContextType {
     setRunState: React.Dispatch<React.SetStateAction<string>>;
 
     mapData: IMapData;
+    mapRef: React.MutableRefObject<MapView | null>;
     setMapData: React.Dispatch<React.SetStateAction<IMapData>>;
 
     simulationParams: SimulationDict;
@@ -94,6 +96,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
 
     const [runState, setRunState] = useState('initial');
 
+    const mapRef = useRef<MapView | null>(null);
     const [mapData, setMapData] = useState<IMapData>(INITIAL_MAP_DATA);
 
     var [moveableImages, setMoveableImages] = useState([
@@ -126,6 +129,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 simulationParams, setSimulationParams,
                 runState, setRunState,
 
+                mapRef,
                 mapData, setMapData,
 
             }}

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { StatusBar } from 'expo-status-bar';
-import { BT_SwitchingImages, Circle_Text_Color } from '../functions/display/buttons';
+import { AreaButtonBackgroundProps, BT_SwitchingImages, Circle_Text_Color } from '../functions/display/buttons';
 import { Circle_Timer_Triangle, ControlSimulationMenu, ControlsSpeedScreen } from '../functions/display/buttons_special';
 import { useAppState } from '../assets/stateContext';    
 import { getFormattedDateTime } from '../asyncOperations/fileOperations';
@@ -20,7 +20,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
     const { current_location, 
         activeTime, passiveTime, totalTime,
         bool_update_locations, enable_update_locations,
-        mapData, setMapData,
+        mapRef, mapData, setMapData,
         runState, setRunState,
         arr_location_history, pos_array_diffs,
         simulationParams, setSimulationParams,
@@ -35,6 +35,15 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
           },
         }));
       };
+      const handleMapZoom = (val:number) => {
+        setMapData((prevMapData) => ({
+          ...prevMapData,
+          viewProps: {
+            ...prevMapData.viewProps,
+            zoomLevel: val,
+          },
+        }));
+      };      
       const handleMapTypeStringChange = (val:string) => {
         console.log("handleMapTypeStringChange---map type changed to: ", val)
         setMapData((prevMapData) => ({
@@ -45,8 +54,17 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
           },
         }));
       };
+      const handleMapZoomAtChange = (val:'runner' | 'map') => {
+        console.log("handleMapZoomAtChange---map type changed to: ", val)
+        setMapData((prevMapData) => ({
+          ...prevMapData,
+          viewProps: {
+            ...prevMapData.viewProps,
+            centerAt: val,
+          },
+        }));
+      };
 
-      const mapRef = useRef(null);
       const map_type_strings = ["dark", "aubergine","retro","silver","standard"];
       const map_styles = {
         "aubergine_333" : require('../assets/map_styles/aubergine_333.json'),
@@ -110,25 +128,15 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
           </View>
         );
       }
-    
+   
       const usePolyLines = true;
-
-      const animate_point=async()=>{
-        console.log("animate_point, runState:", runState, ", simulationParams:", simulationParams.isPaused)
-        if (simulationParams.isPaused || runState === "paused") 
-        {
-          //console.log("mapRef.current:\n", mapRef.current)
-          return;
-        }
-        mapRef.current.setCamera({
-          heading:current_location.coords.heading,
-          zoom: 18,
-          center: {
-            latitude:mapData.locations[mapData.locations.length-1].latitude,
-            longitude:mapData.locations[mapData.locations.length-1].longitude,
-          },
-          pitch: 0,})
-      }
+      const POLY_LINE_COLORS = {"dark": "#fff","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
+      const COL_Underlay = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
+      const COL_ImgBcg = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
+      const COL_ImgTxt = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#444","standard": "#a43a22"};
+      const COL_Border1 = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
+      const COL_Border2 = {"dark": "#000","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
+      const showRunner = true;
 
   return (
     <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
@@ -151,17 +159,19 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
                               activeTime={activeTime} passiveTime={passiveTime} totalTime={totalTime}
                               />
 
-      <BT_SwitchingImages renderBool={true} top="0%" left="70%" im_current={mapData.viewProps.mapTypeString} possible_images={map_type_strings}
-                          setNewImg={handleMapTypeStringChange} size={0.15} press_type="both" />
+
+
+
+
 
       <View style={{flex: 1, flexDirection:"row", alignSelf: 'center', alignItems:"center", alignContent:"center", 
-                    top:"3%", left:"8%", position:"absolute",
-                    width: '40%' }}>
-      <Text style={{ alignSelf: 'center', color: 'white' }}>
-          Detail({mapData.viewProps.detailValue.toFixed(0)})
+                    top:"3%", left:"25%", position:"absolute",
+                    width: '45%' }}>
+      <Text style={{ alignSelf: 'center', marginRight:10, color:  COL_ImgTxt[mapData.viewProps.mapTypeString]} }>
+          Detail({mapData.viewProps.detailValue.toFixed(0)}) 
         </Text>
       <Slider
-          style={{width: '80%', alignSelf: 'center' }}
+          style={{width: '30%', alignSelf: 'center', backgroundColor: COL_ImgBcg[mapData.viewProps.mapTypeString]  }}
           minimumValue={3}
           maximumValue={4}
           step={1}
@@ -169,37 +179,92 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
           onValueChange={handleMapValueChange}
         />
       </View>
+
+      <BT_SwitchingImages renderBool={true} top="2%" left="63%" im_current={mapData.viewProps.mapTypeString} possible_images={map_type_strings}
+                          underlayColor={COL_Underlay[mapData.viewProps.mapTypeString]}  
+                          imageBackgroundColor = {COL_ImgBcg[mapData.viewProps.mapTypeString]}
+                          borderColor = {COL_Border1[mapData.viewProps.mapTypeString]}
+                          txtColor={COL_ImgTxt[mapData.viewProps.mapTypeString]}
+                          setNewImg={handleMapTypeStringChange} size={0.15} press_type="both" />
+
+      <BT_SwitchingImages renderBool={true} top="12%" left="83%" im_current={mapData.viewProps.centerAt} 
+                          possible_strings={['runner', 'map']} possible_images={['zoom', 'zoom']}
+                          underlayColor={COL_Underlay[mapData.viewProps.mapTypeString]} 
+                          borderColor = {COL_Border2[mapData.viewProps.mapTypeString]}
+                          imageBackgroundColor={COL_ImgBcg[mapData.viewProps.mapTypeString]}
+                          txtColor={COL_ImgTxt[mapData.viewProps.mapTypeString]}
+                          setNewImg={handleMapZoomAtChange} size={0.13} press_type="both" />
+
+      {/*--------ZOOOOOOM IN----------*/}
+      <View
+      style={{flex: 1,flexDirection: "row",alignSelf: "center",alignItems: "center",
+        alignContent: "center",top: "26%",left: "83%",
+        position: "absolute",width: "40%",
+      }}
+      >
+      <Text style={{ color: COL_ImgTxt[mapData.viewProps.mapTypeString]} }>Zoom In</Text>
+      </View>
+
+      <View style={{flex: 1,flexDirection: "row",alignSelf: "center",alignItems: "center",
+        alignContent: "center",top: "33%",left: "76%",
+        position: "absolute",width: "30%", transform:[{rotate: "-90deg"}], }}>
+      <Slider
+        style={{ width: "80%", alignSelf: "center", backgroundColor: COL_ImgBcg[mapData.viewProps.mapTypeString] }}
+        minimumValue={13}
+        maximumValue={19}
+        step={1}
+        value={mapData.viewProps.zoomLevel}
+        onValueChange={handleMapZoom}
+
+      />
+      </View>
+      
+      {/*--------ZOOOOOOM OUT----------*/}
+      <View
+      style={{flex: 1,flexDirection: "row",alignSelf: "center",alignItems: "center",
+        alignContent: "center",top: "43%",left: "81%",
+        position: "absolute",width: "40%",
+      }}
+      >
+        <Text style={{ color: COL_ImgTxt[mapData.viewProps.mapTypeString] }}>Zoom Out</Text>
+      </View>
+
   
 
-      <View style={{flex: 1, position:"absolute", alignItems:"center", justifyContent:"center", top:"0%", width:"100%", height:"100%",zIndex:-200}}>
+      <View style={{flex: 1, position:"absolute", alignItems:"center", justifyContent:"center", top:"1%", width:"100%", height:"100%",zIndex:-200}}>
       {mapData.region.latitude === 0.0 
           ? (<Text style={{ color: "white" }}>Waiting For Location</Text>) 
           : (
         <MapView provider={PROVIDER_GOOGLE} 
-                  style={{backgroundColor:"#fff", width:"98%",height:"76%"}}
+                  style={{backgroundColor:"#fff", width:"98%",height:"99%"}}
                   ref={mapRef}
                   initialRegion={mapData.initial_region}
                   showsUserLocation={true}
-                  showsCompass={true}
+                  showsCompass={false}
                   rotateEnabled={true}
-                  zoomEnabled={true}
+                  zoomEnabled={false}
                   customMapStyle={mapStyle}
-                  region={mapData.region}
-                  onRegionChangeComplete={animate_point}
             >
-              {!usePolyLines && mapData.locations.length > 0 &&  
-                mapData.locations.slice(Math.max(0,mapData.locations.length-3),mapData.locations.length-1).map((location: IMapLocation, index: number) => (
-                <Marker
-                    key={`location-${index}`}
+              {current_location && showRunner &&  
+                <View style={{flex: 1, width: 50, height: 50 }}>
+                  <Marker
+                    key={`location-runner`}
                     coordinate={{
-                      latitude: location.latitude,
-                      longitude: location.longitude,
-                    }}>
-
-                    <CustomMarker val={index} maxVal={3} showNumbers={false}/>
-
+                      latitude: current_location.coords.latitude,
+                      longitude: current_location.coords.longitude,
+                    }}
+                    anchor={{ x: 0.5, y: 0.5 }}
+                >
+                  <View style={{ width: 60, height: 60 }}>
+                    <Image
+                      source={require("../assets/pngs/run.png")}
+                      style={{ flex: 1, width: undefined, height: undefined }} // Allow the image to fill the available space
+                      resizeMode="stretch"
+                    />
+                  </View>
                 </Marker>
-              ))}
+                </View>
+              }
 
               {usePolyLines && mapData.polyGroup.length > 0 && 
                 mapData.polyGroup.map((pg: IMapPolyGroupMember, index: number) => (
@@ -207,33 +272,13 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
                     <Polyline
                       key={`polyline-${index}`}
                       coordinates={mapData.locations.slice(pg.from,pg.to)} //specify our coordinates
-                      strokeColor={"#440"}
+                      strokeColor={POLY_LINE_COLORS[mapData.viewProps.mapTypeString]}
                       strokeWidth={4}
                       lineDashPattern={[3]}
                     />
                 )) 
               }
-              { usePolyLines && mapData.polyGroup.length > 0 && 
-                <Polyline
-                  key={`polyline-lastm2`}
-                  coordinates={mapData.locations.slice( Math.max(mapData.polyGroup[mapData.polyGroup.length-1].from,mapData.polyGroup[mapData.polyGroup.length-1].to-4),
-                                                        mapData.polyGroup[mapData.polyGroup.length-1].to-2)} //specify our coordinates
-                  strokeColor={"#ff0"}
-                  strokeWidth={8}
-                  lineDashPattern={[3]}
-                />
-              }
-              { usePolyLines && mapData.polyGroup.length > 0 && 
-                <Polyline
-                  key={`polyline-lastm1`}
-                  coordinates={mapData.locations.slice( Math.max(mapData.polyGroup[mapData.polyGroup.length-1].from,mapData.polyGroup[mapData.polyGroup.length-1].to-3),
-                                                        mapData.polyGroup[mapData.polyGroup.length-1].to-1)} //specify our coordinates
-                  strokeColor={"#0f0"}
-                  strokeWidth={8}
-                  lineDashPattern={[3]}
-                />
-              }
-              { usePolyLines && mapData.polyGroup.length > 0 && 
+              { usePolyLines && mapData.polyGroup.length > 0 && false &&
                 <Polyline
                   key={`polyline-lastm0`}
                   coordinates={mapData.locations.slice( Math.max(mapData.polyGroup[mapData.polyGroup.length-1].from,mapData.polyGroup[mapData.polyGroup.length-1].to-2),
@@ -249,20 +294,22 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
 
       </View>
 
-    {simulationParams.index==-1 ?
-
+      
+      <AreaButtonBackgroundProps renderBool={true} top="82%" height="22%" />
+      {simulationParams.index==-1 ?
       <ControlsSpeedScreen renderBool={true} 
                           bool_update_locations={bool_update_locations} enable_update_locations={enable_update_locations}
                           arr_location_history={arr_location_history} pos_array_diffs={pos_array_diffs}
                           runState={runState} setRunState={setRunState} current_location={current_location}
-                          top={89}
+                          top={83}
       />
       :
         <ControlSimulationMenu renderBool={true}
-            top="89%" left="0%"
+            top="86%" left="0%"
             simParams={simulationParams} setSimParams={setSimulationParams}
         />
       }
+
     </View>
   );
 };

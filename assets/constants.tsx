@@ -1,9 +1,16 @@
 import { LocationObject } from "expo-location";
 import { SimulationDict, SpeedTimeCalced } from "./types";
 import { IMapData } from "./interface_definitions";
+import { useRef } from "react";
 
 export const CALC_DISTANCES_FIXED = [200, 100, 50];
 export const CALC_TIMES_FIXED = [60, 30, 10];
+
+export const FIXED_DISTANCES = {
+    "MAP_DATA_ADD": 10,
+    "POLY_GROUP_MAX_WITHIN_DISTANCE": 20,
+    "ALLOWED_COORD_ACCURACY": 15,
+};
 
 export const INIT_SIMULATION_PARAMS: SimulationDict = {
     index: -1,
@@ -86,6 +93,8 @@ export const INITIAL_MAP_DATA: IMapData = {
       viewProps: {
       detailValue: 3,
       mapTypeString: 'dark',
+      centerAt: 'runner',
+      zoomLevel: 17,
     },
   };
 

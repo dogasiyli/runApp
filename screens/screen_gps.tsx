@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 
 import { getPermits, useLocationForeground, registerBackgroundFetchAsync } from '../asyncOperations/requests';
 
-import { INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND, latDelta_min, lonDelta_min } from '../assets/constants';
+import { FIXED_DISTANCES, INIT_TIMES, LOCATION_TRACKING, LOCATION_TRACKING_BACKGROUND, latDelta_min, lonDelta_min } from '../assets/constants';
 import { IMapBoundaries, IMapRegion } from '../assets/interface_definitions';
 
 
@@ -19,7 +19,7 @@ import { useAppState } from '../assets/stateContext';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../asyncOperations/requests';
-import { isLocationFarEnough, isFurtherThan, on_new_gps_data } from '../asyncOperations/gpsOperations';
+import { isLocationFarEnough, isFurtherThan, on_new_gps_data, animate_point } from '../asyncOperations/gpsOperations';
 import { handleTimerInterval, } from '../asyncOperations/utils';
 
 import { CoveredDistance, SpeedTimeCalced_Dict } from '../assets/types';
@@ -28,7 +28,6 @@ import { CALC_TIMES_FIXED, CALC_DISTANCES_FIXED } from '../assets/constants';
 import { resetSimulation } from '../asyncOperations/resetOperations';
 
 export function Screen_GPS_Debug({route}) {
-  const ALLOWED_COORD_ACCURACY = 15;
   const sims_all =
   {
     'circleRun': require('../assets/plottable_run_examples/runPositions_20230526_123109_circleRun.json'),
@@ -58,7 +57,7 @@ export function Screen_GPS_Debug({route}) {
           lastTimestamp, setLastTimestamp,
           setActiveTime, setPassiveTime, setTotalTime,
 
-          mapData, setMapData,
+          mapRef, mapData, setMapData,
           simulationParams, setSimulationParams,
           runState, setRunState,
           set_location_history, set_pos_array_kalman, set_pos_array_diffs
@@ -200,13 +199,13 @@ export function Screen_GPS_Debug({route}) {
   useEffect(() => {
     const fetchData = async () => {
       //console.log("try fetchData ", isCalculating, bool_record_locations);
-      if ((bool_record_locations || !simulationParams.isPaused) && (current_location.coords.accuracy < ALLOWED_COORD_ACCURACY)) {
+      if ((bool_record_locations || !simulationParams.isPaused) && (current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])) {
         await updateLocationHistory(arr_location_history, (bool_record_locations || !simulationParams.isPaused), current_location);
         await updatePosDict(arr_location_history, pos_array_kalman, pos_array_diffs, 
                             pos_array_timestamps, set_pos_array_timestamps, current_location);
         await updateDistances(arr_location_history, (bool_record_locations || !simulationParams.isPaused), pos_array_diffs, current_location, setCoveredDistance);
       } 
-      else if (current_location.coords.accuracy >= ALLOWED_COORD_ACCURACY)
+      else if (current_location.coords.accuracy >= FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])
       {
         console.log("skip gps loc - accuracy is too low: ", current_location.coords.accuracy);
       }
@@ -276,6 +275,7 @@ export function Screen_GPS_Debug({route}) {
   useEffect(() => {
     if (current_location && current_location.coords) {
       const { latitude, longitude } = current_location.coords;
+      
   
       const checkLocation = async () => {
         const isFarEnough = await isLocationFarEnough(
@@ -310,13 +310,10 @@ export function Screen_GPS_Debug({route}) {
           // add the location to the map
 
           newBounds = await set_new_bounds(newBounds, latitude, longitude);
-          console.log("newBounds:", newBounds);
+          //console.log("newBounds:", newBounds);
 
           newRegion = await set_new_region(newRegion, newBounds, latitude, longitude);
-          console.log("newRegion:", newRegion); 
-          
-          //before updating the map, update polyGroup too
-
+          //console.log("newRegion:", newRegion); 
 
           setMapData((prevState) => ({
             ...prevState,
@@ -331,6 +328,14 @@ export function Screen_GPS_Debug({route}) {
     }
   }, [current_location]);
 
+  //when to animate map
+  useEffect(() => {
+      const animateMap = async () => {          
+          await animate_point(runState, simulationParams, mapData, mapRef, current_location);
+      }
+      animateMap();
+    }, [mapData.viewProps, current_location, mapData.loc_boundaries]);  
+
   useEffect(() => {
     //console.log("mapData.locations.length changed to:", mapData.locations.length);
     if (mapData.locations.length < 2) 
@@ -343,7 +348,7 @@ export function Screen_GPS_Debug({route}) {
       //console.log("---isTooFar---isFurtherThan:polyGroupCount(", polyGroupCount, '):', mapData.polyGroup[polyGroupCount-1].to, mapData.locations.length);
       const tooFar2BeInTheSameGroup = await isFurtherThan(
         mapData.locations[mapData.polyGroup[polyGroupCount-1].to],
-        mapData.locations, 35
+        mapData.locations, FIXED_DISTANCES["POLY_GROUP_MAX_WITHIN_DISTANCE"]
       );
       //console.log("---isTooFar---tooFar2BeInTheSameGroup:polyGroupCount(", polyGroupCount, '):', tooFar2BeInTheSameGroup);
 

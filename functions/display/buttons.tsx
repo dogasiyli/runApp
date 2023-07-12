@@ -19,6 +19,7 @@ const button_images = {
   "silver" : require('../../assets/map_styles/silver.png'),
   "standard" : require('../../assets/map_styles/standard.png'),
   "retro" : require('../../assets/map_styles/retro.png'),
+  "zoom" : require('../../assets/pngs/zoom.png'),
 }
 
 const run_images = {
@@ -663,9 +664,13 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     possible_images: string[];
     setNewImg: (newImg: string) => void;
     im_current: string;
+    possible_strings?: string[];
     press_type?: string;
     underlayColor?: string;
     belowText?: string;
+    imageBackgroundColor?: string;
+    borderColor?: string;
+    txtColor?: string;
   }
   
   export const BT_SwitchingImages: React.FC<SwitchingImagesProps> = ({
@@ -675,18 +680,22 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     size,
     possible_images, setNewImg,
     im_current,
+    possible_strings=null,
     press_type = "long",
     underlayColor = "transparent",
     belowText = undefined,
+    imageBackgroundColor = 'transparent',
+    borderColor = "transparent",
+    txtColor = "yellow",
   }) => {
     if (!renderBool) {
       return null;
     }
     const { width } = Dimensions.get("window");
     const circleSize = width * size; // Adjust the percentage as needed
-    const bgc = "transparent";
-    const im_id=possible_images.indexOf(im_current);
-    const s = belowText === undefined ? possible_images[im_id] : belowText;
+    possible_strings = possible_strings === null ? possible_images : possible_strings;
+    const im_id=possible_strings.indexOf(im_current);
+    const s = belowText === undefined ? possible_strings[im_id] : belowText;
     const imageSource = button_images[possible_images[im_id]];
 
     //console.log(`im_id: ${im_id}, im_current: ${im_current}, possible_images[im_id]: ${possible_images[im_id]}`);
@@ -695,9 +704,9 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
       // If press_type is "both" or "short", increment the im_id
       console.log(`handlePress: ${press_type}, im_id: ${im_id}`);
       if (press_type === "both" || press_type === "short") {
-        const nextImId = (im_id + 1) % possible_images.length;
+        const nextImId = (im_id + 1) % possible_strings.length;
         // Update the im_id state to switch to the next image
-        const nextImg = possible_images[nextImId];
+        const nextImg = possible_strings[nextImId];
         console.log(`nextImId: ${nextImId}, nextImg: ${nextImg}`);
         setNewImg(nextImg);
       }
@@ -707,9 +716,9 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
       // If press_type is "both" or "long", decrement the im_id
       console.log(`handleLongPress: ${press_type}, im_id: ${im_id}`);
       if (press_type === "both" || press_type === "long") {
-        const prevImId = (im_id - 1 + possible_images.length) % possible_images.length;
+        const prevImId = (im_id - 1 + possible_strings.length) % possible_strings.length;
         // Update the im_id state to switch to the previous image
-        const prevImage = possible_images[prevImId];
+        const prevImage = possible_strings[prevImId];
         console.log(`prevImId: ${prevImId}, prevImage: ${prevImage}`);
         setNewImg(prevImage);
       }
@@ -734,7 +743,9 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
           <View
             style={{
               backgroundColor: underlayColor,
-              borderRadius: circleSize / 2,
+              borderRadius: circleSize,
+              borderColor: borderColor,
+              borderWidth: 2,
               overflow: "hidden",
               alignSelf: "center",
               alignItems: "center",
@@ -743,7 +754,7 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
             <Image
               source={imageSource}
               style={{
-                backgroundColor: bgc,
+                backgroundColor: imageBackgroundColor,
                 width: circleSize,
                 height: circleSize,
                 borderRadius: circleSize / 4,
@@ -765,12 +776,12 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
           <Text
             disabled={false}
             style={{
-              backgroundColor: bgc,
+              backgroundColor: "transparent",
               width: circleSize,
               height: circleSize,
               textAlign: "center",
               lineHeight: circleSize / 2,
-              color: "yellow",
+              color: txtColor,
               fontSize: circleSize / 6,
               borderRadius: circleSize / 4,
             }}
@@ -784,6 +795,41 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     );
   };
    
+
+  interface AreaButtonBackgroundProps {
+    renderBool: boolean;
+    top:string; 
+    height:string;
+    
+    borderRadius?:number;
+    width?:string;
+    backgroundColor?:string;
+    zIndex?:number;
+
+    
+    borderWidth?:number; 
+    borderColor?:string;
+    belowText?:string;
+    textColor?:string;
+  }
+export const AreaButtonBackgroundProps: React.FC<AreaButtonBackgroundProps> = ({ 
+  renderBool, 
+  top, height,
+  borderRadius=20,
+  width="100%",
+  backgroundColor= 'rgba(255, 255, 255, 0.5)',
+  zIndex=-20,
+  }) => {
+  if (!renderBool) {
+    return null;
+  }
+  return (  
+    <View style={{ flex: 1, position: 'absolute', top:top, height: height, width:width, borderRadius:borderRadius, 
+                   backgroundColor: backgroundColor, zIndex:zIndex }}>
+    </View>  
+  );
+};
+
   // interface BT_Picker_Props {
   //   renderBool: boolean;
   //   top:string; 

@@ -165,6 +165,8 @@ export interface IMapPolyGroupMember{
 export interface IMapViewProps {
   detailValue: number;
   mapTypeString: string;
+  centerAt: 'runner' | 'map';
+  zoomLevel: number;
 }
 
 export interface IMapData {
