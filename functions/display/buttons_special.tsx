@@ -3,7 +3,7 @@ import { TouchableHighlight, View, Text } from 'react-native';
 import { CircleImagePaceV1Props, CircleTimerTriangleProps, CoveredDistanceProps, PickedPaceProps } from '../../assets/interface_definitions';
 import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image, BT_Picker, BT_Functional_Image } from '../display/buttons';
 
-import { SimulationDict, stDict_hasKey } from '../../assets/types';
+import { PaceBlockEntry, SimulationDict, stDict_hasKey } from '../../assets/types';
 import { getReadableDuration, saveToFile_multiple } from '../../asyncOperations/fileOperations';
 import { CALC_TIMES_FIXED } from '../../assets/constants';
 import { calc_run_params } from '../../asyncOperations/utils';
@@ -363,3 +363,79 @@ export const ControlSimulationMenu: React.FC<ControlSimulationProps> = ({
         </>
   );
 };
+
+
+export interface IntervalRowProps {
+    renderBool: boolean;
+    intervalRow:PaceBlockEntry,
+    time_dist:string,
+    top: number;
+    last_idx:number;
+    cur_idx:number;
+    beforeText?: string;
+    size?:number;
+  }
+
+export const IntervalRow: React.FC<IntervalRowProps> = ({
+    renderBool,
+    intervalRow,
+    time_dist,
+    top,
+    beforeText,
+    last_idx, cur_idx,
+    size=null,
+  }) => {
+
+      if (!renderBool)
+          return;
+
+      const pace_size = size===null? 0.13 : size;
+      const time_size = size===null? (cur_idx==last_idx ? 0.23: 0.20) : size;
+      const {block_type, dist, init, last, pace, time} = intervalRow;
+      const val_str = time_dist==='time' ? time.toFixed(0)+'s' : dist.toFixed(0)+'m';
+      const [_, speed_kmh] = calc_run_params(dist, time);
+      const new_top = (top + (cur_idx-last_idx)*25).toFixed(0)+'%';
+      const new_top2 = (top +  (cur_idx==last_idx ? 0 : 3) + (cur_idx-last_idx)*25).toFixed(0)+'%';
+      const afterText= cur_idx.toFixed(0)+'/'+last_idx.toFixed(0)
+
+      //console.log("interval row ", last_idx, cur_idx, intervalRow)
+      
+      if (speed_kmh==0)
+          return;
+  
+    return (
+    <>
+      <Circle_Image_Pace
+        renderBool={renderBool}
+        speed_kmh={speed_kmh}
+        time_diff={time}
+        top={new_top}
+        left={"70%"}
+        beforeText={beforeText}
+        size={pace_size}
+      />
+      <Circle_Text_Color 
+        renderBool={true} 
+        dispVal={dist.toFixed(0)+'m'}
+        circleSize={time_size}
+        backgroundColor= { cur_idx!=last_idx ? "rgb(50,50,50)" :  "rgb(50,200,200)"} 
+        textColor= { cur_idx!=last_idx ? "rgb(255,255,255)" :  "rgb(0,0,0)"} 
+        top={new_top2}
+        left={'40%'}
+        afterText={ cur_idx==last_idx ? "DIST" :  ""} 
+        beforeText=''
+      />     
+       <Circle_Text_Color 
+      renderBool={true} 
+      dispVal={getReadableDuration(time*1000)}
+      circleSize={time_size}
+      backgroundColor= { cur_idx!=last_idx ? "rgb(50,50,50)" :  "rgb(50,200,200)"} 
+      textColor= { cur_idx!=last_idx ? "rgb(255,255,255)" :  "rgb(0,0,0)"} 
+      top={new_top2}
+      left={'10%'}
+      afterText={ cur_idx==last_idx ? "TIME" :  ""} 
+      beforeText=''
+    />
+      </>
+    );
+  };

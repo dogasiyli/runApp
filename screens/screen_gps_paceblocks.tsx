@@ -3,10 +3,10 @@ import { View, TextInput, Text, Image } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { StatusBar } from 'expo-status-bar';
 import { AreaButtonBackgroundProps, BT_SwitchingImages, BT_Toggle_Image, Circle_Text_Color } from '../functions/display/buttons';
-import { Circle_Timer_Triangle, ControlSimulationMenu, ControlsSpeedScreen } from '../functions/display/buttons_special';
+import { Circle_Timer_Triangle, ControlSimulationMenu, ControlsSpeedScreen, IntervalRow } from '../functions/display/buttons_special';
 import { useAppState } from '../assets/stateContext';    
 import { getFormattedDateTime } from '../asyncOperations/fileOperations';
-import { PaceBlockDict } from '../assets/types';
+import { PaceBlockDict, PaceBlockEntry } from '../assets/types';
 
 
 interface PaceBlockScreenProps {
@@ -146,6 +146,16 @@ export const PaceBlockScreen: React.FC<PaceBlockScreenProps> = ({ insets }) => {
                      belowText={paceBlock.initial_index==-1 ? 'Start' : 'Started'}
                      true_img='pause' false_img='run'/>
       
+      {paceBlock.paceBlocks.length > 0 && 
+                paceBlock.paceBlocks.map((pb:PaceBlockEntry , index: number) => (paceBlock.paceBlocks.length-index<=4 &&
+                  <IntervalRow renderBool={true} cur_idx={index} intervalRow={paceBlock.paceBlocks[index]}
+                               last_idx={paceBlock.paceBlocks.length-1}
+                               time_dist='dist' top={110} 
+                  />
+
+                ))
+      }
+
       <AreaButtonBackgroundProps renderBool={true} top="82%" height="22%" />
       {simulationParams.index==-1 ?
       <ControlsSpeedScreen renderBool={true} 

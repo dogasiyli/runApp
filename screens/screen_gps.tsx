@@ -236,7 +236,7 @@ export function Screen_GPS_Debug({route}) {
       // update only if recording is enabled or simulation is started
       const run_updates = bool_record_locations || !simulationParams.isPaused || simulationParams.index>0;
       const _calc_times = display_page_mode === 'SpeedScreens' || display_page_mode === 'SimulateScreen' || display_page_mode === 'Debug Screen';
-      const _calc_dists = display_page_mode === 'SpeedScreens' || display_page_mode === 'SimulateScreen';
+      const _calc_dists = display_page_mode === 'SpeedScreens' || display_page_mode === 'SimulateScreen' || display_page_mode === 'PaceBlockScreen';
       
       if (isMounted && run_updates && _calc_times) {
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[0]);
@@ -617,7 +617,19 @@ export function Screen_GPS_Debug({route}) {
       .then((new_block_type) => {
         console.log("new_block_type:", new_block_type);
         // Continue with the logic using the new_block_type value
-        if (paceBlock.paceBlocks[block_id].block_type===new_block_type)
+
+        const isPauseArea = pos_array_diffs[pos_arr_last][1]>3;
+
+        if (isPauseArea)
+        {
+            //here we have a new area - the only thing is
+            //pos_arr_last wont be indexed anywhere
+            //and new block needs to be introduced
+            //for now just skip??
+            console.log("SKIPPING PAUSE BLOCK:",pos_arr_last,pos_array_diffs[pos_arr_last][1])
+          
+        }
+        else if (paceBlock.paceBlocks[block_id].block_type===new_block_type)
         {
           console.log("GOON SAME BLOCK:",new_block_type, paceBlock.paceBlocks[block_id].init, paceBlock.paceBlocks[block_id].last)
           paceBlock.paceBlocks[block_id].dist += pos_array_diffs[pos_arr_last][0];
