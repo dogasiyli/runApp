@@ -93,7 +93,7 @@ export const isFurtherThan = async (curLoc: IMapLocation, locations: Array<IMapL
 
 export const animate_point=async(runState, simulationParams, mapData, mapRef, current_location)=>{
   const ca = mapData.viewProps.centerAt;
-  console.log("animate_point, runState:", runState, ", simulationParams:", simulationParams.isPaused)
+  //console.log("animate_point, runState:", runState, ", simulationParams:", simulationParams.isPaused)
   if (simulationParams.isPaused || runState === "paused") 
   {
     //console.log("mapRef.current:\n", mapRef.current)

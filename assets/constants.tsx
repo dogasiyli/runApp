@@ -1,5 +1,5 @@
 import { LocationObject } from "expo-location";
-import { SimulationDict, SpeedTimeCalced } from "./types";
+import { PaceBlockDict, SimulationDict, SpeedTimeCalced } from "./types";
 import { IMapData } from "./interface_definitions";
 import { useRef } from "react";
 
@@ -101,3 +101,28 @@ export const INITIAL_MAP_DATA: IMapData = {
 export type OfflineLocationData = {locations: LocationObject[];};
 export const LOCATION_TRACKING = 'location-tracking';
 export const LOCATION_TRACKING_BACKGROUND = 'location-tracking';
+
+export const INIT_PACE_BLOCK:PaceBlockDict = {
+    initial_index: -1,
+    paceBlocks: [],
+    paceBlockTreshold_fast:{
+        pace: 4.9,
+        speed: 12,
+    },
+    paceBlockTreshold_slow:{
+        pace: 5.5,
+        speed: 10,
+    },
+    aim_dist: {
+    "fast": 200,
+    "norm": null,
+    "slow": null,
+    "notfast": null,
+    },
+    aim_time: {
+    "fast": null,
+    "norm": null,
+    "slow": null,
+    "notfast": 120,
+    },
+};

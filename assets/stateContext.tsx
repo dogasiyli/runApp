@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useRef, useState } from 'react';
-import { INITIAL_MAP_DATA, INIT_PERMITS, INIT_POSITION, INIT_SIMULATION_PARAMS, TIME_STAMPS } from '../assets/constants';
-import { GPS_Data, SimulationDict } from '../assets/types';
+import { INITIAL_MAP_DATA, INIT_PACE_BLOCK, INIT_PERMITS, INIT_POSITION, INIT_SIMULATION_PARAMS, TIME_STAMPS } from '../assets/constants';
+import { GPS_Data, PaceBlockDict, PaceBlockEntry, PaceBlockTresholds, SimulationDict, SpeedTimeCalced_Dict } from '../assets/types';
 import { IMapData } from './interface_definitions';
 import MapView from 'react-native-maps';
 
@@ -60,6 +60,12 @@ interface StateContextType {
 
     simulationParams: SimulationDict;
     setSimulationParams: React.Dispatch<React.SetStateAction<SimulationDict>>;
+
+    paceBlock: PaceBlockDict;
+    setPaceBlock: React.Dispatch<React.SetStateAction<PaceBlockDict>>;
+
+    stDict: SpeedTimeCalced_Dict;
+    setStDict: React.Dispatch<React.SetStateAction<SpeedTimeCalced_Dict>>;
 }
 
 const StateContext = createContext<StateContextType | undefined>(undefined);
@@ -99,6 +105,9 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const mapRef = useRef<MapView | null>(null);
     const [mapData, setMapData] = useState<IMapData>(INITIAL_MAP_DATA);
 
+    const [stDict, setStDict] = useState<SpeedTimeCalced_Dict>({});
+    const [paceBlock, setPaceBlock] = useState<PaceBlockDict>(INIT_PACE_BLOCK);
+
     var [moveableImages, setMoveableImages] = useState([
       {positionX: 75,positionY: 250,selected: false,},
       {positionX: 275,positionY: 250,selected: false,},
@@ -131,6 +140,9 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
 
                 mapRef,
                 mapData, setMapData,
+
+                stDict, setStDict,
+                paceBlock, setPaceBlock,
 
             }}
     >

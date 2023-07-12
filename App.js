@@ -27,6 +27,7 @@ export default function App() {
           <Stack.Screen name="Screen_Navigation" component={Screen_Navigations} options={{headerShown:false}}/>
           <Stack.Screen name="SpeedScreeN" component={Screen_GPS_Debug}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "SpeedScreen" })} />
           <Stack.Screen name="MapScreen" component={Screen_GPS_Debug}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "MapScreen" })} />
+          <Stack.Screen name="PaceBlocks" component={Screen_GPS_Debug}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "PaceBlockScreen" })} />
           </Stack.Navigator>
         </NavigationContainer>
       </AppStateProvider>

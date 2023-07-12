@@ -485,6 +485,8 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
   toggle_val = toggle_val===undefined ? set_bool_val : toggle_val;
   toggle_func = toggle_func===undefined ? toggle : toggle_func;
 
+  //console.log("toggle_val:",toggle_val)
+
   return (
     <View style={{ flex: 1, position: 'absolute', top:top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
       <TouchableHighlight underlayColor={"transparent"} 

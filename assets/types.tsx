@@ -66,3 +66,36 @@ export type SimulationDict =
   selected: string;
   stepSelected: number;
 }
+
+/*
+  A PaceBlockTreshold is a treshold of speed
+*/
+export type PaceBlockTresholds = {
+  pace: number,
+  speed: number,
+}
+
+export type PaceBlockEntry = {
+  init: number;
+  last: number;
+  time: number;
+  dist: number;
+  pace: number;
+  block_type: string;
+}
+
+export type PaceBlockAim = {
+  "fast":number,
+  "norm":number,
+  "slow":number,
+  "notfast":number,
+};
+
+export type PaceBlockDict = {
+  initial_index: number;
+  paceBlocks: Array<PaceBlockEntry>;
+  paceBlockTreshold_fast: PaceBlockTresholds;
+  paceBlockTreshold_slow: PaceBlockTresholds;
+  aim_dist: PaceBlockAim;
+  aim_time: PaceBlockAim;
+}
