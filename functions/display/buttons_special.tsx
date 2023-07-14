@@ -125,7 +125,7 @@ export const Circle_Covered_Distance: React.FC<CoveredDistanceProps> = ({
     const after_text = dist_type_totalT_lastF ? "Total Dist." : "Last Dist.";
 
     return (
-        <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, 
+        <View style={{ flex: 1, position: 'absolute', top: top, left: left, 
                         justifyContent: 'flex-start', alignItems: 'center',
                         alignContent:'center', alignSelf:'center' }}>
             <TouchableHighlight underlayColor="transparent" style={{ padding: 35 }} 

@@ -3,7 +3,7 @@ import { View, Text, Image } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { StatusBar } from 'expo-status-bar';
 import { AreaButtonBackgroundProps, BT_SwitchingImages, Circle_Text_Color } from '../functions/display/buttons';
-import { Circle_Timer_Triangle, ControlSimulationMenu, ControlsSpeedScreen } from '../functions/display/buttons_special';
+import { Circle_Pace_Picked, Circle_Timer_Triangle, ControlSimulationMenu, ControlsSpeedScreen } from '../functions/display/buttons_special';
 import { useAppState } from '../assets/stateContext';    
 import { getFormattedDateTime } from '../asyncOperations/fileOperations';
 
@@ -24,6 +24,9 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
         runState, setRunState,
         arr_location_history, pos_array_diffs,
         simulationParams, setSimulationParams,
+        coveredDistance, stDict,
+        dist_type_totalT_lastF,
+        pace_type_aveT_curF, set_pace_type_aveT_curF, 
       } = useAppState();
      
       const handleMapValueChange = (val:number) => {
@@ -160,10 +163,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
                               />
 
 
-
-
-
-
       <View style={{flex: 1, flexDirection:"row", alignSelf: 'center', alignItems:"center", alignContent:"center", 
                     top:"3%", left:"25%", position:"absolute",
                     width: '45%' }}>
@@ -230,6 +229,13 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
       </View>
 
   
+      <Circle_Pace_Picked renderBool={true}
+                        covered_dist={coveredDistance} stDict={stDict}
+                        dist_type_totalT_lastF={dist_type_totalT_lastF}
+                        activeTime={activeTime}
+                        pace_type_aveT_curF={pace_type_aveT_curF} set_pace_type_aveT_curF={set_pace_type_aveT_curF}
+                        top="110%" left="5%"/> 
+
 
       <View style={{flex: 1, position:"absolute", alignItems:"center", justifyContent:"center", top:"1%", width:"100%", height:"100%",zIndex:-200}}>
       {mapData.region.latitude === 0.0 

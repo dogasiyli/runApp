@@ -56,30 +56,29 @@ export const handleTimerInterval = async (
   
     // Check if bool_record_locations changed
     if (lastTimestamp !== null) {
-
+      const duration = (simParams.index>0 ? simParams.gpsDataArray[simParams.index].timestamp : curTimestamp) - lastTimestamp;
       if (bool_record_locations)
       {
-        const duration = curTimestamp - lastTimestamp;
         if (bool_record_locations) {
           setActiveTime((prevActiveTime) => prevActiveTime + duration);
-        } else {
-          setPassiveTime((prevPassiveTime) => prevPassiveTime + duration);
-        }
-        setTotalTime((prevTotalTime) => prevTotalTime + duration);
+        } 
         setLastTimestamp(curTimestamp);
       }
       else if (simParams.index>0)
       {
-        const duration = simParams.gpsDataArray[simParams.index].timestamp - lastTimestamp;
         //console.log("-*0-*0-*0-*0-handleTimerInterval:",simParams.index,duration)
         if (duration<2000) {
           setActiveTime((prevActiveTime) => prevActiveTime + duration);
         } else {
           setPassiveTime((prevPassiveTime) => prevPassiveTime + duration);
         }
-        setTotalTime((prevTotalTime) => prevTotalTime + duration);
         setLastTimestamp(simParams.gpsDataArray[simParams.index].timestamp);
       }
+      else {
+        setPassiveTime((prevPassiveTime) => prevPassiveTime + duration);
+        setLastTimestamp(curTimestamp);
+      }
+      setTotalTime((prevTotalTime) => prevTotalTime + duration);
     }
   };
   

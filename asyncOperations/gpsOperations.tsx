@@ -1,5 +1,5 @@
-import { FIXED_DISTANCES, OfflineLocationData } from "../assets/constants";
-import { IMapLocation } from "../assets/interface_definitions";
+import { FIXED_DISTANCES, OfflineLocationData, latDelta_min, lonDelta_min } from "../assets/constants";
+import { IMapBoundaries, IMapData, IMapLocation, IMapRegion } from "../assets/interface_definitions";
 import { calc_geodesic } from "./utils";
 
 
@@ -46,7 +46,7 @@ export const isLocationFarEnough = async (curLoc:IMapLocation, locations:Array<I
 
   if (!locations || locations.length===0)
   {
-    console.log("NO LOCATIONS YET")
+    //console.log("NO LOCATIONS YET")
     return true;
   }
   //console.log(locations.length, " of locations will be checked for distance")
@@ -73,7 +73,7 @@ export const isLocationFarEnough = async (curLoc:IMapLocation, locations:Array<I
 
 export const isFurtherThan = async (curLoc: IMapLocation, locations: Array<IMapLocation>, distanceToCheck: number) => {
   if (!locations || locations.length === 0) {
-    console.log("NO LOCATIONS YET");
+    //console.log("NO LOCATIONS YET");
     return false;
   }
 
@@ -111,3 +111,104 @@ export const animate_point=async(runState, simulationParams, mapData, mapRef, cu
       pitch: 0,})
   }
 };
+
+export const updateMapInformation = async (mapData, setMapData, bool_record_locations, simulationParams, current_location) => {
+  if (current_location && current_location.coords) {
+    const { latitude, longitude } = current_location.coords;  
+    const isFarEnough = await isLocationFarEnough(
+      { latitude, longitude },
+      mapData.locations
+    );
+    const set_new_bounds = async(newBounds:IMapBoundaries, latitude, longitude) => {
+      newBounds.lat_max = Math.max(newBounds.lat_max, latitude);
+      newBounds.lat_min = Math.min(newBounds.lat_min, latitude);
+      newBounds.lon_max = Math.max(newBounds.lon_max, longitude);
+      newBounds.lon_min = Math.min(newBounds.lon_min, longitude);
+      newBounds.lat_delta = Math.max(newBounds.lat_max - newBounds.lat_min, latDelta_min);
+      newBounds.lon_delta = Math.max(newBounds.lon_max - newBounds.lon_min, lonDelta_min);   
+      return newBounds;       
+    }
+    const set_new_region = async(newRegion:IMapRegion, newBounds:IMapBoundaries, latitude:number, longitude:number) => {
+      //newRegion.latitudeDelta = 2*newBounds.lat_delta;
+      //newRegion.longitudeDelta = 2*newBounds.lon_delta;
+      newRegion.latitude = latitude;
+      newRegion.longitude = longitude;      
+      return newRegion;     
+    }
+    const isToBeAdded = bool_record_locations || !simulationParams.isPaused;
+
+    let newBounds = {...mapData.loc_boundaries};
+    let newRegion = {
+      ...mapData.region,
+      latitude: latitude,
+      longitude: longitude,
+    };
+    if (isFarEnough && isToBeAdded) {
+      // add the location to the map
+
+      newBounds = await set_new_bounds(newBounds, latitude, longitude);
+      //console.log("newBounds:", newBounds);
+
+      newRegion = await set_new_region(newRegion, newBounds, latitude, longitude);
+      //console.log("newRegion:", newRegion); 
+
+      setMapData((prevState) => ({
+        ...prevState,
+        locations: [...prevState.locations, { latitude, longitude }],
+        loc_boundaries: newBounds,
+        region: newRegion,
+      }));
+    }
+  }
+};
+
+const isTooFar = async (mapData, polyGroupCount:number) => {
+  //console.log("---isTooFar---polyGroupCount(", polyGroupCount, ')');
+  if (polyGroupCount<1) return false;
+
+  //console.log("---isTooFar---isFurtherThan:polyGroupCount(", polyGroupCount, '):', mapData.polyGroup[polyGroupCount-1].to, mapData.locations.length);
+  const tooFar2BeInTheSameGroup = await isFurtherThan(
+    mapData.locations[mapData.polyGroup[polyGroupCount-1].to],
+    mapData.locations, FIXED_DISTANCES["POLY_GROUP_MAX_WITHIN_DISTANCE"]
+  );
+  //console.log("---isTooFar---tooFar2BeInTheSameGroup:polyGroupCount(", polyGroupCount, '):', tooFar2BeInTheSameGroup);
+
+  return tooFar2BeInTheSameGroup;
+};
+
+export const updatePolyGroups = async (mapData:IMapData, setMapData:React.Dispatch<React.SetStateAction<IMapData>>) => {
+  const polyGroupCount =  mapData.polyGroup.length;
+  const tooFar2BeInTheSameGroup = await isTooFar(mapData, polyGroupCount);
+  const map_loc_last = mapData.locations.length-1;
+  //TODO check if the activity type is passed from current location etc.
+  const known_activityType_last =  mapData.locations[map_loc_last-1]?.activityType ? mapData.locations[map_loc_last-1]?.activityType : undefined;
+  const known_activityType_curr =  mapData.locations[map_loc_last]?.activityType ? mapData.locations[map_loc_last]?.activityType : undefined;
+  let last_activityType =  polyGroupCount>0 ? mapData.polyGroup[polyGroupCount-1].actType : (known_activityType_last===undefined ? "run": known_activityType_last);
+  let curr_activityType =  known_activityType_curr===undefined ? "run": known_activityType_curr;
+
+  if (mapData.locations.length == 2) {
+    //console.log("mapData.locations.length == 2")
+    setMapData((prevState) => ({
+      ...prevState,
+      polyGroup: [...prevState.polyGroup, { from: 0, to: 1, actType: curr_activityType }],
+    }));
+    //console.log("11111111-BEG-mapData.polyGroup:\n", mapData.polyGroup);
+    return;
+  }
+
+  curr_activityType = tooFar2BeInTheSameGroup ? "pause" : curr_activityType;
+  //console.log("tooFar2BeInTheSameGroup:", tooFar2BeInTheSameGroup, ", curr_activityType:", curr_activityType, ", last_activityType:", last_activityType);
+  if (curr_activityType==last_activityType)
+  {
+    mapData.polyGroup[polyGroupCount-1].to = map_loc_last;
+    //console.log("2222222-INC-mapData.polyGroup:\n", mapData.polyGroup);
+  }
+  else
+  {
+    setMapData((prevState) => ({
+      ...prevState,
+      polyGroup: [...prevState.polyGroup, { from: map_loc_last-1, to: map_loc_last, actType: curr_activityType }],
+    }));
+    //console.log("33333333-APP-mapData.polyGroup:\n", mapData.polyGroup);
+  }
+}

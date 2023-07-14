@@ -11,14 +11,14 @@ import { SpeedTimeCalced_Dict, stDict_hasKey } from '../assets/types';
 
 interface DebugScreenProps {
   insets: any;
-  stDict: SpeedTimeCalced_Dict;
   screenText:string;
 }
 
-export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, stDict, screenText }) => {
+export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, screenText }) => {
     const { permits, current_location,
         bool_record_locations, arr_location_history, 
-        activeTime, passiveTime, totalTime, pos_array_diffs } = useAppState();
+        activeTime, passiveTime, totalTime, pos_array_diffs,
+        stDict } = useAppState();
     const save_button_disabled = !permits["mediaLibrary"] || bool_record_locations || arr_location_history.length<=1;
     const last_or_best_dist = "last";
     const last_or_best_time = "last";

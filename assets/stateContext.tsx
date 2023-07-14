@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useRef, useState } from 'react';
 import { INITIAL_MAP_DATA, INIT_PACE_BLOCK, INIT_PERMITS, INIT_POSITION, INIT_SIMULATION_PARAMS, TIME_STAMPS } from '../assets/constants';
-import { GPS_Data, PaceBlockDict, PaceBlockEntry, PaceBlockTresholds, SimulationDict, SpeedTimeCalced_Dict } from '../assets/types';
+import { CoveredDistance, GPS_Data, PaceBlockDict, PaceBlockEntry, PaceBlockTresholds, SimulationDict, SpeedTimeCalced_Dict } from '../assets/types';
 import { IMapData } from './interface_definitions';
 import MapView from 'react-native-maps';
 
@@ -66,6 +66,15 @@ interface StateContextType {
 
     stDict: SpeedTimeCalced_Dict;
     setStDict: React.Dispatch<React.SetStateAction<SpeedTimeCalced_Dict>>;
+
+    coveredDistance: CoveredDistance;
+    setCoveredDistance: React.Dispatch<React.SetStateAction<CoveredDistance>>;
+
+    dist_type_totalT_lastF: boolean;
+    set_dist_type_totalT_lastF: React.Dispatch<React.SetStateAction<boolean>>;
+
+    pace_type_aveT_curF: boolean;
+    set_pace_type_aveT_curF: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const StateContext = createContext<StateContextType | undefined>(undefined);
@@ -108,6 +117,11 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [stDict, setStDict] = useState<SpeedTimeCalced_Dict>({});
     const [paceBlock, setPaceBlock] = useState<PaceBlockDict>(INIT_PACE_BLOCK);
 
+    const [coveredDistance, setCoveredDistance] = useState<CoveredDistance>({   distance_all: 0,distance_last: 0,time_diff_last: 0,dist_to_start: 0});
+
+    const [dist_type_totalT_lastF, set_dist_type_totalT_lastF] = useState(true);
+    const [pace_type_aveT_curF, set_pace_type_aveT_curF] = useState(false);
+
     var [moveableImages, setMoveableImages] = useState([
       {positionX: 75,positionY: 250,selected: false,},
       {positionX: 275,positionY: 250,selected: false,},
@@ -143,6 +157,10 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
 
                 stDict, setStDict,
                 paceBlock, setPaceBlock,
+
+                coveredDistance, setCoveredDistance,
+                dist_type_totalT_lastF, set_dist_type_totalT_lastF,
+                pace_type_aveT_curF, set_pace_type_aveT_curF,
 
             }}
     >
