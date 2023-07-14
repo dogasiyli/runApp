@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 from PIL import Image
 
@@ -27,9 +28,27 @@ def get_defined_area(image):
     print("last_col:",last_col,", last_row:",last_row)
     return first_col, last_col, first_row, last_row
 
-def change_png(image_path, pad_percent, replace, save_base):
+def resize_image(image, percent=None, width=None, height=None):
+    image_format = image.format
+    
+    # Calculate the new size based on the given percentage
+    if percent is not None:
+        percent /= 100.0
+        new_size = tuple(int(dim * percent) for dim in image.size)
+    else:
+        # Calculate the new size based on the given width and height
+        if width is not None and height is not None:
+            new_size = (width, height)
+        else:
+            raise ValueError("Please provide either a percentage or both width and height values.")
+    
+    resized_image = image.resize(new_size)
+    return resized_image
+
+def change_png(image_path, image_name, pad_percent, replace, save_base, percent=None, width=None, height=None):
     # Load the image
-    image = Image.open(image_path)
+    full_path = os.path.join(image_path, image_name)
+    image = Image.open(full_path)
     
     # Get the original width and height
     width, height = image.size
@@ -52,7 +71,7 @@ def change_png(image_path, pad_percent, replace, save_base):
 
     # Save the modified image
     if save_base:
-        base_image_path = "base_" + image_path
+        base_image_path = os.path.join(image_path, "base_" + image_name)
         image.save(base_image_path)
         print(f"Base image saved to: {base_image_path}")
     
@@ -77,10 +96,16 @@ def change_png(image_path, pad_percent, replace, save_base):
     new_image.paste(image, (x_offset, y_offset))
     
     # Save the modified image
-    new_image_path = image_path if replace else "modified_" + image_path
+    new_image_path = full_path if replace else os.path.join(image_path, "modified_" + image_name)
     new_image.save(new_image_path)
     
     print(f"Modified image saved to: {new_image_path}")
+
+    if (percent!=None):
+        new_image = resize_image(new_image, percent=percent)
+        new_image_path = full_path if replace else os.path.join(image_path, "resized_" + image_name)
+        new_image.save(new_image_path)
+        print(f"Resized image saved to: {new_image_path}")
 
 
 if __name__ == "__main__":
@@ -92,9 +117,11 @@ if __name__ == "__main__":
     for i in range(len(sys.argv)):
         print(i,sys.argv[i])
     image_path = sys.argv[1]
-    pad_percent = float(sys.argv[2])
-    replace = sys.argv[3].lower() == "true" if len(sys.argv) > 3 else False
-    save_base = sys.argv[4].lower() == "true" if len(sys.argv) > 4 else False
+    image_name = sys.argv[2]
+    pad_percent = float(sys.argv[3])
+    replace = sys.argv[4].lower() == "true" if len(sys.argv) > 4 else False
+    save_base = sys.argv[5].lower() == "true" if len(sys.argv) > 5 else False
+    percent = None if len(sys.argv) < 6 else float(sys.argv[6])
 
-    print("image_path:", image_path, ", pad_percent:", pad_percent, ", replace:", replace, ", save_base:", save_base)
-    change_png(image_path, pad_percent, replace, save_base)
+    print("image_path:", image_path, "image_name:", image_name, ", pad_percent:", pad_percent, ", replace:", replace, ", save_base:", save_base)
+    change_png(image_path, image_name, pad_percent, replace, save_base, percent=percent)

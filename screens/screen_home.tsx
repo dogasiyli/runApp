@@ -1,7 +1,7 @@
-import { View } from 'react-native';
+import { DimensionValue, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BT_Circle_Clickable } from '../functions/display/buttons';
+import { BT_Circle_Clickable, BT_Image_Clickable } from '../functions/display/buttons';
 import { useEffect } from 'react';
 import { getPermits, startBackgroundLocationTracking, stopBackgroundLocationTracking, useLocationForeground } from '../asyncOperations/requests';
 import { useAppState } from '../assets/stateContext';
@@ -207,17 +207,34 @@ export function Screen_Home({navigation}) {
       startStopSimulation(simulationParams, setSimulationParams, set_current_location);
     }, [simulationParams.isPaused]);
   
+    const tops:DimensionValue[] = ["10%", "40%", "70%"];
   return (
     <>
     <StatusBar backgroundColor="white" style="auto" />
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
-      <BT_Circle_Clickable renderBool={true} top="10%" left="10%" size_perc={0.25} nav={navigation} page_name="GPS Debug" page_navigate_str="GPS_Debug" display_page_mode="Debug Screen" />
-      <BT_Circle_Clickable renderBool={true} top="10%" left="40%" size_perc={0.25} nav={navigation} page_name="Moving Pts" page_navigate_str="Moveable_Points" />
-      <BT_Circle_Clickable renderBool={true} top="10%" left="70%" size_perc={0.25} nav={navigation} page_name="Screen Stack" page_navigate_str="Screen_Navigation" />
-      <BT_Circle_Clickable renderBool={true} top="40%" left="10%" size_perc={0.25} nav={navigation} page_name="Speeds" page_navigate_str="GPS_Debug" display_page_mode="SpeedScreens"  />
-      <BT_Circle_Clickable renderBool={true} top="40%" left="40%" size_perc={0.25} nav={navigation} page_name="Maps" page_navigate_str="GPS_Debug" display_page_mode="MapScreen"  />
-      <BT_Circle_Clickable renderBool={true} top="40%" left="70%" size_perc={0.25} nav={navigation} page_name="Simulate" page_navigate_str="GPS_Debug" display_page_mode="SimulateScreen"  />
-      <BT_Circle_Clickable renderBool={true} top="70%" left="10%" size_perc={0.25} nav={navigation} page_name="Interval" page_navigate_str="GPS_Debug" display_page_mode="PaceBlockScreen"  />
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
+      <BT_Image_Clickable renderBool={true} top={tops[0]} left="10%" 
+                          size_perc={0.20} nav={navigation} page_name="Speeds" 
+                          page_navigate_str="GPS_Debug" display_page_mode="SpeedScreens" 
+                          image_name='Speeds' />
+      <BT_Image_Clickable renderBool={true} top={tops[0]} left="40%" 
+                          size_perc={0.20} nav={navigation} page_name="Maps" 
+                          page_navigate_str="GPS_Debug" display_page_mode="MapScreen" 
+                          image_name='Maps' />
+      <BT_Image_Clickable renderBool={true} top={tops[0]} left="70%" 
+                          size_perc={0.20} nav={navigation} page_name="Simulate" 
+                          page_navigate_str="GPS_Debug" display_page_mode="SimulateScreen"  
+                          image_name='Simulate'/>
+      <BT_Image_Clickable renderBool={true} top={tops[1]} left="10%" 
+                          size_perc={0.20} nav={navigation} page_name="Interval" 
+                          page_navigate_str="GPS_Debug" display_page_mode="PaceBlockScreen"
+                          image_name='Interval'  />
+      <BT_Image_Clickable renderBool={true} top={tops[1]} left="40%" 
+                          size_perc={0.20} nav={navigation} page_name="Motivators" 
+                          page_navigate_str="Motivators" display_page_mode="Our Indomitable Run-Gurus"
+                          image_name='Motivators'/>   
+      <BT_Circle_Clickable renderBool={false} top={tops[2]} left="10%" size_perc={0.25} nav={navigation} page_name="GPS Debug" page_navigate_str="GPS_Debug" display_page_mode="Debug Screen" />
+      <BT_Circle_Clickable renderBool={false} top={tops[2]} left="40%" size_perc={0.25} nav={navigation} page_name="Moving Pts" page_navigate_str="Moveable_Points" />
+      <BT_Circle_Clickable renderBool={false} top={tops[2]} left="70%" size_perc={0.25} nav={navigation} page_name="Screen Stack" page_navigate_str="Screen_Navigation" /> 
     </View>
     </>
   );

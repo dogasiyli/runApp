@@ -1,3 +1,4 @@
+import { DimensionValue } from "react-native";
 import { SpeedTimeCalced_Dict } from "./types";
 export interface TimestampDiffInfoProps {
     Formatted_Time_Diff: string;
@@ -12,13 +13,13 @@ export interface ViewRCProps {
 
 export interface CircleTextGPSProps {
   renderBool: boolean;
-  top:string;
-  left:string;
+  top:DimensionValue;
+  left:DimensionValue;
 }
 export interface ToggleImageProps {
   renderBool: boolean;
-  top:string; 
-  left:string;
+  top:DimensionValue; 
+  left:DimensionValue;
   size:number;
   bool_val:boolean;
   set_bool_val:any;
@@ -32,8 +33,8 @@ export interface ToggleImageProps {
 }
 export interface CircleClickableProps {
   renderBool: boolean;
-  top:string;
-  left:string;
+  top:DimensionValue;
+  left:DimensionValue;
   size_perc:number;
   nav:any;
   page_name:string;
@@ -44,8 +45,8 @@ export interface CircleClickableProps {
 export interface DisplayDataProps {
   renderBool: boolean;
   current_location: object;
-  top:string;
-  left:string;
+  top:DimensionValue;
+  left:DimensionValue;
 }
 
 export interface CircleTextErrorProps {
@@ -55,8 +56,8 @@ export interface CircleTextErrorProps {
   afterText: string;
   floatVal: number;
   tresholds: Array<number>;
-  top:string;
-  left:string;
+  top:DimensionValue;
+  left:DimensionValue;
   size?:number;
 }
 
@@ -67,8 +68,8 @@ export interface CircleTextColorProps {
     afterText: string;
     floatVal?: number;
     backgroundColor: string;
-    top:string|number;
-    left:string|number;
+    top:DimensionValue;
+    left:DimensionValue;
     circleSize?: number;
     textColor?: string;
     size?:number;
@@ -80,8 +81,8 @@ export interface CircleTextColorProps {
     time_diff: number;
     beforeText?: string;
     afterText?: string;
-    top: string;
-    left: string;
+    top: DimensionValue;
+    left: DimensionValue;
     size?:number;
   }
 
@@ -93,8 +94,8 @@ export interface CircleTextColorProps {
     last_or_best:string,
     beforeText?: string;
     afterText?: string;
-    top: string;
-    left: string;
+    top: DimensionValue;
+    left: DimensionValue;
     size?:number;
   }
 
@@ -118,8 +119,8 @@ export interface CoveredDistanceProps {
   covered_dist:any;
   dist_type_totalT_lastF:boolean;
   set_dist_type:any;
-  top:string; 
-  left:string;
+  top:DimensionValue; 
+  left:DimensionValue;
 }
 
 export interface PickedPaceProps {
@@ -130,8 +131,8 @@ export interface PickedPaceProps {
   activeTime:number;
   pace_type_aveT_curF:boolean;
   set_pace_type_aveT_curF:any;
-  top:string; 
-  left:string;
+  top:DimensionValue; 
+  left:DimensionValue;
 }
 
 export interface IMapLocation {

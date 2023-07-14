@@ -1,4 +1,4 @@
-import { Text, Image, TouchableHighlight, View, PanResponder, Vibration, Dimensions } from 'react-native';
+import { Text, Image, TouchableHighlight, View, PanResponder, Vibration, Dimensions, DimensionValue } from 'react-native';
 import { Switch } from 'react-native-switch';  
 import { useAppState } from '../../assets/stateContext';
 import React, { useRef, useState } from 'react';
@@ -20,6 +20,14 @@ const button_images = {
   "standard" : require('../../assets/map_styles/standard.png'),
   "retro" : require('../../assets/map_styles/retro.png'),
   "zoom" : require('../../assets/pngs/zoom.png'),
+}
+
+const menu_images = {
+  "Speeds" : require('../../assets/pngs/run_fast.png'),
+  "Simulate" : require('../../assets/pngs/simulate.png'),
+  "Maps" : require('../../assets/map_styles/standard.png'),
+  "Interval" : require('../../assets/pngs/interval.png'),
+  "Motivators" : require('../../assets/pngs/motivate.png'),
 }
 
 const run_images = {
@@ -525,9 +533,9 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
 
 interface BT_Picker_Props {
   renderBool: boolean;
-  top:string; 
-  left:string;
-  width?:string;
+  top:DimensionValue; 
+  left:DimensionValue;
+  width?:DimensionValue;
   pickableBool?:boolean;
   items:string[] | number[];
   value:string | number;
@@ -592,8 +600,8 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
 
   interface FunctionalImageProps {
     renderBool: boolean;
-    top:string; 
-    left:string;
+    top:DimensionValue; 
+    left:DimensionValue;
     size:number;
     img_src:string;
     func: (...args: any[]) => void;
@@ -660,8 +668,8 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
 
   interface SwitchingImagesProps {
     renderBool: boolean;
-    top: string;
-    left: string;
+    top: DimensionValue;
+    left: DimensionValue;
     size: number;
     possible_images: string[];
     setNewImg: (newImg: string) => void;
@@ -800,11 +808,11 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
 
   interface AreaButtonBackgroundProps {
     renderBool: boolean;
-    top:string; 
-    height:string;
+    top:DimensionValue; 
+    height:DimensionValue;
     
     borderRadius?:number;
-    width?:string;
+    width?:DimensionValue;
     backgroundColor?:string;
     zIndex?:number;
 
@@ -829,6 +837,67 @@ export const AreaButtonBackgroundProps: React.FC<AreaButtonBackgroundProps> = ({
     <View style={{ flex: 1, position: 'absolute', top:top, height: height, width:width, borderRadius:borderRadius, 
                    backgroundColor: backgroundColor, zIndex:zIndex }}>
     </View>  
+  );
+};
+
+interface ImageClickableProps {
+  renderBool: boolean;
+  top: DimensionValue;
+  left: DimensionValue;
+  size_perc: number;
+  nav: any;
+  page_name: string;
+  page_navigate_str: string;
+  image_name: string;
+  display_page_mode?: string;
+}
+
+export const BT_Image_Clickable: React.FC<ImageClickableProps> = ({
+  renderBool,
+  top,
+  left,
+  size_perc,
+  nav,
+  page_name,
+  page_navigate_str,
+  image_name,
+  display_page_mode,
+}) => {
+  if (!renderBool) {
+    return null;
+  }
+
+  const { width } = Dimensions.get('window');
+  const circleSize = width * size_perc;
+  const imageSource = menu_images[image_name]; // Replace 'path/to/image.png' with the actual path to your PNG image
+
+  return (
+    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+      <TouchableHighlight underlayColor="transparent" onPress={() => nav.navigate(page_navigate_str, { display_page_mode: display_page_mode })}>
+        <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
+          <Image source={imageSource} style={{ width: circleSize, height: circleSize }} />
+        </View>
+      </TouchableHighlight>
+      <View style={{marginTop:-10, backgroundColor: 'transparent', borderRadius: circleSize / 2, overflow: 'hidden', alignSelf: 'center', alignItems: 'center' }}>
+        <Text
+          disabled={false}
+          style={{
+            backgroundColor: "transparent",
+            width: circleSize,
+            height: circleSize,
+            textAlign: 'center',
+            lineHeight: circleSize / 2,
+            color: 'black',
+            fontSize: circleSize / 6,
+            borderRadius: circleSize / 4,
+          }}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {page_name}
+        </Text>
+      </View>
+    </View>
   );
 };
 

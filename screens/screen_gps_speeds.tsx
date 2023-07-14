@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, DimensionValue } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BT_Toggle_Image } from '../functions/display/buttons';
 import { Circle_Image_Pace_v1, Circle_Timer_Triangle, Circle_Covered_Distance, 
@@ -12,7 +12,7 @@ interface SpeedScreenProps {
 }
 
 export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets }) => {
-    const row_tops = ["30%", "90%"];
+    const row_tops:DimensionValue[] = ["30%", "90%"];
     const pace_size = 0.13;
     const { current_location, 
         activeTime, passiveTime, totalTime,
@@ -34,7 +34,7 @@ export const SpeedScreen: React.FC<SpeedScreenProps> = ({ insets }) => {
   const [bool_lastF_bestT, set_bool_lb] = useState(false);
 
   return (
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
     <StatusBar style="auto" />
                 
     {/*--------ROW 0-COL 2/3----------*/}

@@ -21,3 +21,4 @@ __pycache__/*
 *.pyc
 application*.aab
 runapp-*.json
+.env

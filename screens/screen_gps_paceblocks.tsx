@@ -67,7 +67,7 @@ export const PaceBlockScreen: React.FC<PaceBlockScreenProps> = ({ insets }) => {
       }, [paceBlock]);
 
   return (
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
       <StatusBar style="auto" />
 
 

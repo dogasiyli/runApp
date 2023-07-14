@@ -10,6 +10,7 @@ import { Screen_GPS_Debug } from './screens/screen_gps';
 import { Screen_MoveablePoints } from './screens/screen_movable_points';
 import { Screen_Home } from './screens/screen_home';
 import { Screen_Navigations } from './screens/screen_navigations';
+import { Screen_Runners } from './screens/screen_runners';
 
 import { style_container } from './sheets/styles';
 
@@ -63,7 +64,7 @@ export default function App() {
     <View style={style_container.container}>
       <AppStateProvider>
         <NavigationContainer>
-        <Stack.Navigator screenOptions={{headerStyle: { backgroundColor: 'purple' },}}>
+        <Stack.Navigator screenOptions={{headerStyle: { backgroundColor: '#a7f' },}}>
           <Stack.Screen name="Home" component={Screen_Home} />
           <Stack.Screen name="GPS_Debug" component={Screen_GPS_Debug} options={({ route }) => ({ title: route.params?.display_page_mode ||  "Debug GPS" })} />
           <Stack.Screen name="Moveable_Points" component={Screen_MoveablePoints} />
@@ -71,6 +72,7 @@ export default function App() {
           <Stack.Screen name="SpeedScreeN" component={Screen_GPS_Debug}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "SpeedScreen" })} />
           <Stack.Screen name="MapScreen" component={Screen_GPS_Debug}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "MapScreen" })} />
           <Stack.Screen name="PaceBlocks" component={Screen_GPS_Debug}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "PaceBlockScreen" })} />
+          <Stack.Screen name="Motivators" component={Screen_Runners}  options={({ route }) => ({ title: route.params?.display_page_mode ||  "Runners" })} />
           </Stack.Navigator>
         </NavigationContainer>
       </AppStateProvider>

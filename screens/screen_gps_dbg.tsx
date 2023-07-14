@@ -25,7 +25,7 @@ export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, screenText }) 
   // Use the state variables from the context as needed in this component
 
   return (
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
         <StatusBar style="auto" />
 
         {/*--------ROW 1----------*/}

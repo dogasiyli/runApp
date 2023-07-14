@@ -13,7 +13,7 @@ export const style_home = StyleSheet.create({
     position:"absolute", 
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'purple',
+    backgroundColor: '#a7f',
   },
 });
   

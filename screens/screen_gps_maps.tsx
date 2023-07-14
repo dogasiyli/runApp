@@ -142,7 +142,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
       const showRunner = true;
 
   return (
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "purple" }}>
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
       <StatusBar style="auto" />
 
 
