@@ -91,10 +91,14 @@ export function Screen_Home({navigation}) {
 
   // useEffect runState effecting enable_record_locations and enable_update_locations
   useEffect(() => {
-    //console.log("runState:",runState)
-    if (runState==="paused" || runState==="stopped")
+    console.log("runState:",runState)
+    if (runState==="paused" || runState==="finish")
     { 
       enable_record_locations(false);
+    }
+    if (runState=="finish")
+    {
+      enable_update_locations(false);
     }
     if (runState==="running")
     { 
@@ -134,7 +138,7 @@ export function Screen_Home({navigation}) {
       console.log("fetchData:bool_record_locations(",bool_record_locations,"), simulationParams.isPaused(",simulationParams.isPaused,")");
       console.log("current_location.coords.accuracy(",current_location.coords.accuracy,")");
       if (bool_record_locations && current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])
-        await addLocation(current_location);
+        await addLocation(current_location, arr_location_history);
       //console.log("try fetchData ", isCalculating, bool_record_locations);
       if (first_if) {
         await updateLocationHistory(arr_location_history, (bool_record_locations || !simulationParams.isPaused), current_location);

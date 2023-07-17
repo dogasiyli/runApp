@@ -33,7 +33,7 @@ export const define_tracking_job = async (set_current_location) => {
     try {
       // have to add it sequentially, parses/serializes existing JSON
       for (const loc of locations) {
-        console.log('[tracking004]-', LOCATION_TRACKING_TASK_NAME + '-go to updateLocationData');
+        //console.log('[tracking004]-', LOCATION_TRACKING_TASK_NAME + '-go to updateLocationData');
         await updateLocationData(loc, set_current_location);
       }
     } catch (error) {
@@ -43,7 +43,7 @@ export const define_tracking_job = async (set_current_location) => {
 }
 
 export const on_new_gps_data = (data:OfflineLocationData, set_current_location) => {
-    console.log('on_new_gps_data:', data);
+    //console.log('on_new_gps_data:', data);
     if (data) {
         const locationData: OfflineLocationData = data as OfflineLocationData; // Declare the type of data as LocationData
         locationData.locations.forEach((location, index) => {
@@ -58,9 +58,9 @@ export const on_new_gps_data = (data:OfflineLocationData, set_current_location) 
           } = location.coords;
           const timestamp = location.timestamp;
         
-          console.log(
-            `${index + 1}. ${new Date(timestamp).toLocaleString()}: lat(${latitude}), lon(${longitude}), acc(${accuracy}), ${speed}, ${heading}, ${altitude}, ${altitudeAccuracy}, ${timestamp}`
-          );
+          //console.log(
+          //  `${index + 1}. ${new Date(timestamp).toLocaleString()}: lat(${latitude}), lon(${longitude}), acc(${accuracy}), ${speed}, ${heading}, ${altitude}, ${altitudeAccuracy}, ${timestamp}`
+          //);
 
           const CUR_POSITION = {
             "coords": 
@@ -84,12 +84,18 @@ export const on_new_gps_data = (data:OfflineLocationData, set_current_location) 
  * Add a new location to the storage.
  * This is a helper to append a new location to the storage.
  */
-export async function addLocation(location: GPS_Data): Promise<GPS_Data[]> {
+export async function addLocation(location: GPS_Data, arr_location_history:any[]): Promise<GPS_Data[]> {
   const existing = await Storage.getLocations();
-  const locations = [...existing, location];
+  console.log("-----------------------addLocation: existing", existing.length, arr_location_history.length)
+  const reinit_locations = existing.length > 1 && arr_location_history.length == 1;
+  if (reinit_locations) {
+    console.log("-----------------------addLocation: clearLocations")
+    await Storage.clearLocations(); 
+  }
+  const locations = reinit_locations ? [location] : [...existing, location];
   await Storage.setLocations(locations);
   console.log('[storage]', 'added location -', locations.length, 'stored locations');
-  return locations;
+  return locations;    
 }
 /**
  * Add a new location to the storage.

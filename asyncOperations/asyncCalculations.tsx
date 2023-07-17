@@ -32,10 +32,12 @@ export const updateLocationHistory = async (arr_location_history:object[], bool_
     //   //console.log("POS COUNT :",arr_location_history.length);
     // }
     //console.log("ooooooooooooooooooooooooo1");
-    arr_location_history = await Storage.getLocations()
+    const hist_from_storage = await Storage.getLocations()
     console.log("ooooooooooooooooooooooooo1-updateLocationHistory");
+    for (let i = arr_location_history.length; i < hist_from_storage.length; i++) {
+      arr_location_history.push(hist_from_storage[i]);
+    }
     console.log("arr_location_history.le is now::",arr_location_history.length);
-
     return;
 };
 const initialize_post_dict = async (arr_location_history: any[], set_pos_array_timestamps:React.Dispatch<React.SetStateAction<object>>): Promise<any> => {
@@ -59,16 +61,16 @@ export const updatePosDict = async (arr_location_history:object[], pos_array_kal
                                     current_location:any) => {
     //console.log("+++++++++++++++++++++++++2");
     if (arr_location_history && arr_location_history.length === 2) {
-      //console.log("BLOCK-1:::::::::::::::::::::");
+      console.log("BLOCK-1:::::::::::::::::::::");
       await initialize_post_dict(arr_location_history, set_pos_array_timestamps);
     }
     if (arr_location_history && arr_location_history.length > 2) {
-      //console.log("BLOCK-2:::::::::::::::::::::");
+      console.log("BLOCK-2:::::::::::::::::::::");
       await update_pos_array(arr_location_history, pos_array_kalman, pos_array_diffs, pos_array_timestamps, set_pos_array_timestamps);
-      //console.log("updated pos_array_timestamps:",pos_array_timestamps);
-      //console.log("updated pos_array_kalman and diff len:",pos_array_kalman.length,",",pos_array_diffs.length);
+      console.log("updated pos_array_timestamps:",pos_array_timestamps);
+      console.log("updated pos_array_kalman and diff len:",pos_array_kalman.length,",",pos_array_diffs.length);
     }
-    //console.log("ooooooooooooooooooooooooo2");
+    console.log("ooooooooooooooooooooooooo2");
 };
 
 const update_best = async (stDictEntry:SpeedTimeCalced, interval_type: 'distance'|'time', interval:number):Promise<SpeedTimeCalced> => {

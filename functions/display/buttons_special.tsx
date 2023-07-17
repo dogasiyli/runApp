@@ -233,7 +233,7 @@ export const ControlsSpeedScreen: React.FC<ControlsSpeedScreenProps> = ({
     //console.log("current_location:", current_location)
 
     const leftD = {"gps":2,"camera":0,"save":0,"run":1,"finish":2,"share":2,"stats":1,};
-    const sizeD = {"gps":1,"camera":runState === "stopped" ? 2: 1,"save":2,"run":2,"finish":1,"share":1,"stats":1,};
+    const sizeD = {"gps":1,"camera":runState === "finish" ? 2: 1,"save":2,"run":2,"finish":1,"share":1,"stats":1,};
 
     const gps_color = bool_update_locations ? (current_location["coords"]["accuracy"]>10 ? "orange" : "cyan") : "red";
     const run_color = (runState === "initial" || runState === "paused") ? "cyan" : (runState === "running" ? "yellow" : "pink");
