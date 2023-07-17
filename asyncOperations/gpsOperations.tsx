@@ -2,8 +2,48 @@ import { FIXED_DISTANCES, OfflineLocationData, latDelta_min, lonDelta_min } from
 import { IMapBoundaries, IMapData, IMapLocation, IMapRegion } from "../assets/interface_definitions";
 import { calc_geodesic } from "./utils";
 
+import * as TaskManager from 'expo-task-manager';
+import * as Storage from '../functions/gps/storage';
+import { LOCATION_TRACKING_TASK_NAME } from '../assets/constants';
+import { LocationObject} from 'expo-location';
+import { GPS_Data } from "../assets/types";
 
-export const on_new_gps_data = (data, set_current_location) => {
+/**
+ * Define the background task that's adding locations to the storage.
+ * This method isn't "directly" connected to React, that's why we store the data locally.
+ */
+export const define_tracking_job = async (set_current_location) => {
+  const registeredTasks = await TaskManager.getRegisteredTasksAsync();
+  console.log('[tracking001]-', 'Currently registered tasks', registeredTasks);
+
+  const isMyTaskRegistered = registeredTasks.some(task => task.taskName === LOCATION_TRACKING_TASK_NAME);
+  if (isMyTaskRegistered) {
+    console.log(LOCATION_TRACKING_TASK_NAME, ' is already registered.');
+    return;
+  } 
+
+  TaskManager.defineTask(LOCATION_TRACKING_TASK_NAME, async (event) => {
+    if (event.error) {
+      return console.error('[tracking002]-', LOCATION_TRACKING_TASK_NAME + '-Something went wrong within the background location task...', event.error);
+    }
+
+    const locations = (event.data as any).locations as LocationObject[];
+    console.log('[tracking003]-', LOCATION_TRACKING_TASK_NAME + '-Received new locations', locations.length);
+
+    try {
+      // have to add it sequentially, parses/serializes existing JSON
+      for (const loc of locations) {
+        console.log('[tracking004]-', LOCATION_TRACKING_TASK_NAME + '-go to updateLocationData');
+        await updateLocationData(loc, set_current_location);
+      }
+    } catch (error) {
+      console.log('[tracking005]', 'Something went wrong when saving a new location...', error);
+    }
+  });
+}
+
+export const on_new_gps_data = (data:OfflineLocationData, set_current_location) => {
+    console.log('on_new_gps_data:', data);
     if (data) {
         const locationData: OfflineLocationData = data as OfflineLocationData; // Declare the type of data as LocationData
         locationData.locations.forEach((location, index) => {
@@ -39,6 +79,25 @@ export const on_new_gps_data = (data, set_current_location) => {
           set_current_location(CUR_POSITION);
         });
       }
+}
+/**
+ * Add a new location to the storage.
+ * This is a helper to append a new location to the storage.
+ */
+export async function addLocation(location: GPS_Data): Promise<GPS_Data[]> {
+  const existing = await Storage.getLocations();
+  const locations = [...existing, location];
+  await Storage.setLocations(locations);
+  console.log('[storage]', 'added location -', locations.length, 'stored locations');
+  return locations;
+}
+/**
+ * Add a new location to the storage.
+ * This is a helper to append a new location to the storage.
+ */
+export async function updateLocationData(location: GPS_Data, set_current_location:any): Promise<GPS_Data[]> {
+  on_new_gps_data({locations:[location]}, set_current_location);
+  return;
 }
 
 export const isLocationFarEnough = async (curLoc:IMapLocation, locations:Array<IMapLocation>) => {

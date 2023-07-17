@@ -850,6 +850,8 @@ interface ImageClickableProps {
   page_navigate_str: string;
   image_name: string;
   display_page_mode?: string;
+  imageTintColor?:string;
+  textColor?:string;
 }
 
 export const BT_Image_Clickable: React.FC<ImageClickableProps> = ({
@@ -862,6 +864,8 @@ export const BT_Image_Clickable: React.FC<ImageClickableProps> = ({
   page_navigate_str,
   image_name,
   display_page_mode,
+  imageTintColor = undefined,
+  textColor = "black",
 }) => {
   if (!renderBool) {
     return null;
@@ -875,7 +879,8 @@ export const BT_Image_Clickable: React.FC<ImageClickableProps> = ({
     <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
       <TouchableHighlight underlayColor="transparent" onPress={() => nav.navigate(page_navigate_str, { display_page_mode: display_page_mode })}>
         <View style={{ borderRadius: circleSize / 2, overflow: 'hidden' }}>
-          <Image source={imageSource} style={{ width: circleSize, height: circleSize }} />
+          <Image source={imageSource} style={{ width: circleSize, height: circleSize }}
+                 {...(imageTintColor ? { tintColor:imageTintColor } : {})}/>
         </View>
       </TouchableHighlight>
       <View style={{marginTop:-10, backgroundColor: 'transparent', borderRadius: circleSize / 2, overflow: 'hidden', alignSelf: 'center', alignItems: 'center' }}>
@@ -887,8 +892,12 @@ export const BT_Image_Clickable: React.FC<ImageClickableProps> = ({
             height: circleSize,
             textAlign: 'center',
             lineHeight: circleSize / 2,
-            color: 'black',
+            color: textColor,
             fontSize: circleSize / 6,
+            fontFamily: "sans-serif",
+            fontVariant: ["proportional-nums"],
+            fontWeight: "bold",
+            textDecorationStyle: "double",
             borderRadius: circleSize / 4,
           }}
           numberOfLines={1}

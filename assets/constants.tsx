@@ -99,8 +99,7 @@ export const INITIAL_MAP_DATA: IMapData = {
   };
 
 export type OfflineLocationData = {locations: LocationObject[];};
-export const LOCATION_TRACKING = 'location-tracking';
-export const LOCATION_TRACKING_BACKGROUND = 'location-tracking';
+export const LOCATION_TRACKING_TASK_NAME = 'rubytrackloc';
 
 export const INIT_PACE_BLOCK:PaceBlockDict = {
     initial_index: -1,

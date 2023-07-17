@@ -3,6 +3,8 @@ import { SpeedTimeCalced, SpeedTimeCalced_Dict, stDict_hasKey, stDict_addEntry }
 import { SPEED_TIME_CALCED_INIT } from '../assets/constants';
 import { calc_run_params } from '../asyncOperations/utils';
 
+import * as Storage from '../functions/gps/storage';
+
 export const updateDistances = async (arr_location_history:object[], bool_record_locations:boolean, 
                                       pos_array_diffs:object[], current_location:any, 
                                       setCoveredDistance:any) => {
@@ -24,12 +26,16 @@ export const updateDistances = async (arr_location_history:object[], bool_record
 };
 export const updateLocationHistory = async (arr_location_history:object[], bool_record_locations:boolean, current_location:any) => {
     //console.log("+++++++++++++++++++++++++1");
-    const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
-    if (current_location["timestamp"] !== lastTimestamp && bool_record_locations) {
-      arr_location_history.push(current_location);
-      //console.log("POS COUNT :",arr_location_history.length);
-    }
+    // const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
+    // if (current_location["timestamp"] !== lastTimestamp && bool_record_locations) {
+    //   arr_location_history.push(current_location);
+    //   //console.log("POS COUNT :",arr_location_history.length);
+    // }
     //console.log("ooooooooooooooooooooooooo1");
+    arr_location_history = await Storage.getLocations()
+    console.log("ooooooooooooooooooooooooo1-updateLocationHistory");
+    console.log("arr_location_history.le is now::",arr_location_history.length);
+
     return;
 };
 const initialize_post_dict = async (arr_location_history: any[], set_pos_array_timestamps:React.Dispatch<React.SetStateAction<object>>): Promise<any> => {

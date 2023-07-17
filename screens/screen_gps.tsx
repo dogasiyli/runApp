@@ -22,7 +22,7 @@ export function Screen_GPS_Debug({route}) {
           pos_array_diffs,
           bool_update_locations, 
           paceBlock,
-          stDict, 
+          stDict,
         } = useAppState();
 
   const [screenText, setscreenText] = useState("No locations yet");

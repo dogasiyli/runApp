@@ -1,22 +1,24 @@
 import { DimensionValue, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import * as TaskManager from 'expo-task-manager';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BT_Circle_Clickable, BT_Image_Clickable } from '../functions/display/buttons';
-import { useEffect } from 'react';
-import { getPermits, startBackgroundLocationTracking, stopBackgroundLocationTracking, useLocationForeground } from '../asyncOperations/requests';
+import { useEffect, useRef } from 'react';
+import { getPermits } from '../asyncOperations/requests';
 import { useAppState } from '../assets/stateContext';
 import { CALC_DISTANCES_FIXED, CALC_TIMES_FIXED, FIXED_DISTANCES, INIT_TIMES } from '../assets/constants';
 import { handleTimerInterval } from '../asyncOperations/utils';
 import { updateCalcedResults, updateDistances, updateLocationHistory, updatePosDict } from '../asyncOperations/asyncCalculations';
-import { animate_point, updateMapInformation, updatePolyGroups } from '../asyncOperations/gpsOperations';
+import { addLocation, animate_point, define_tracking_job, updateMapInformation, updatePolyGroups } from '../asyncOperations/gpsOperations';
 import { loadSimulationData, startStopSimulation } from '../asyncOperations/simulationOperations';
+import { useLocationTracking } from '../functions/gps';
+import { getFormattedDateTime } from '../asyncOperations/fileOperations';
 
 export function Screen_Home({navigation}) {
   const insets = useSafeAreaInsets();
+  const tracking = useLocationTracking();
   const { set_permits, 
           bool_record_locations, enable_record_locations,
           bool_update_locations, enable_update_locations,
-          bool_location_background_started, set_location_background_started,
           arr_location_history, 
           current_location, set_current_location,
           initTimestamp, lastTimestamp, 
@@ -31,59 +33,75 @@ export function Screen_Home({navigation}) {
           runState,
 
   } = useAppState();
+  const prevBoolRecordLocations = useRef(bool_record_locations);
+  const prevBoolUpdateLocations = useRef(bool_update_locations);   
 
   // useEffect for getting permissions
   useEffect (() => {
     const _getPermits = async () => {
-      const _permits = await getPermits('locationForeGround,locationBackGround,mediaLibrary');
+      const _permits = await getPermits('locationForeGround,mediaLibrary');
       set_permits(_permits);
     }
     _getPermits()
     .catch(console.error);
   }, [])
 
-  //useEffect for setting up background location tracking on and off
   useEffect(() => {
-    if (bool_location_background_started )
-    {
-      console.log("STARTING BACKGROUND LOCATION TRACKING")
-      startBackgroundLocationTracking()
+    const checkifregistered = async () => {
+      const registeredTasks = await TaskManager.getRegisteredTasksAsync();
+      console.log('[useEffect001]-', 'Currently registered tasks', registeredTasks);
     }
-    else
-    {
-      console.log("STOPPING BACKGROUND LOCATION TRACKING")
-      stopBackgroundLocationTracking(set_location_background_started)
-    }
-  },[bool_location_background_started]);
 
-  // useEffect for updating location info using watchPositionAsync
+    define_tracking_job(set_current_location);
+    checkifregistered();
+    
+  }, []);
+
+  // useEffect for starting and ending tracking location
   useEffect(() => {
-    const updateGPS = async () => {
-      const _loc = await useLocationForeground();
-      if (_loc!=null)
-      {
-        const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
-        if (_loc.timestamp !== lastTimestamp) {
-          //console.log("111-current_loc:",_loc)
-          set_current_location(_loc);
-        }
-      }
+    // Check if bool_record_locations has changed
+    let start = false;
+    let stop = false;
+    if (bool_record_locations !== prevBoolRecordLocations.current) {
+      // Update previous values
+      prevBoolRecordLocations.current = bool_record_locations;
+      console.log("(CHNG)bool_record_locations:",bool_record_locations, "bool_update_locations:",bool_update_locations)
+      bool_record_locations ? "" : bool_update_locations ? start=true : stop=true;
     }
-    // if recording is enabled but updating is not, then enable updating
-    if (bool_record_locations && !bool_update_locations)
+    // Check if  bool_update_locations has changed
+    if (bool_update_locations !== prevBoolUpdateLocations.current) {
+      // Update previous values
+      console.log("(CHNG)bool_update_locations:",bool_update_locations, "bool_record_locations:",bool_record_locations)
+      prevBoolUpdateLocations.current = bool_update_locations;
+      bool_update_locations ? start=true : stop=true;
+    }
+
+    if (start)
     {
+      console.log("start tracking")
+      tracking.startTracking();
+    }
+    if (stop)
+    {
+      console.log("stop tracking")
+      tracking.stopTracking();
+    }
+  }, [bool_record_locations, bool_update_locations]);
+
+
+  // useEffect runState effecting enable_record_locations and enable_update_locations
+  useEffect(() => {
+    //console.log("runState:",runState)
+    if (runState==="paused" || runState==="stopped")
+    { 
+      enable_record_locations(false);
+    }
+    if (runState==="running")
+    { 
       enable_update_locations(true);
+      enable_record_locations(true);
     }
-    // if either recording or updating is enabled, then update GPS
-    if (bool_update_locations || bool_record_locations)
-    {
-        const interval = setInterval(() => {
-          updateGPS();
-          }, INIT_TIMES.gpsUpdateMS);
-        return () => clearInterval(interval);    
-    }
-  }, [bool_record_locations, bool_update_locations]);  
-
+  }, [runState]);
 
   // useEffect for handling timeIntervals
   useEffect(() => {
@@ -103,26 +121,22 @@ export function Screen_Home({navigation}) {
     calcTimes();
   }, [bool_record_locations, simulationParams.isPaused, current_location, initTimestamp]);
 
-  // useEffect appending updated location to arr_location_history
-  useEffect(() => {
-    //console.log("runState:",runState)
-    if (runState==="paused" || runState==="stopped")
-    { 
-      enable_record_locations(false);
-    }
-    if (runState==="running")
-    { 
-      enable_update_locations(true);
-      enable_record_locations(true);
-    }
-  }, [runState]);
-
 
   // useEffect appending updated location to arr_location_history
   useEffect(() => {
+    const formatTimestamp = (timestamp) => {
+      const date = new Date(timestamp);
+      return date.toLocaleString();
+    };
+    console.log("current_location changed to:", formatTimestamp(current_location.timestamp))
     const fetchData = async () => {
+      const first_if = (bool_record_locations || !simulationParams.isPaused) && (current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"]);
+      console.log("fetchData:bool_record_locations(",bool_record_locations,"), simulationParams.isPaused(",simulationParams.isPaused,")");
+      console.log("current_location.coords.accuracy(",current_location.coords.accuracy,")");
+      if (bool_record_locations && current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])
+        await addLocation(current_location);
       //console.log("try fetchData ", isCalculating, bool_record_locations);
-      if ((bool_record_locations || !simulationParams.isPaused) && (current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])) {
+      if (first_if) {
         await updateLocationHistory(arr_location_history, (bool_record_locations || !simulationParams.isPaused), current_location);
         await updatePosDict(arr_location_history, pos_array_kalman, pos_array_diffs, 
                             pos_array_timestamps, set_pos_array_timestamps, current_location);
@@ -130,10 +144,10 @@ export function Screen_Home({navigation}) {
       } 
       else if (current_location.coords.accuracy >= FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])
       {
-        //console.log("skip gps loc - accuracy is too low: ", current_location.coords.accuracy);
+        console.log("skip gps loc - accuracy is too low: ", current_location.coords.accuracy);
       }
       else {
-        //console.log("CANCEL CALCULATING");
+        console.log("CANCEL CALCULATING");
       }
     };
   
@@ -210,29 +224,29 @@ export function Screen_Home({navigation}) {
     const tops:DimensionValue[] = ["10%", "40%", "70%"];
   return (
     <>
-    <StatusBar backgroundColor="white" style="auto" />
+    
     <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
       <BT_Image_Clickable renderBool={true} top={tops[0]} left="10%" 
                           size_perc={0.20} nav={navigation} page_name="Speeds" 
                           page_navigate_str="GPS_Debug" display_page_mode="SpeedScreens" 
-                          image_name='Speeds' />
+                          image_name='Speeds' imageTintColor='red' textColor='#fff'/>
       <BT_Image_Clickable renderBool={true} top={tops[0]} left="40%" 
                           size_perc={0.20} nav={navigation} page_name="Maps" 
                           page_navigate_str="GPS_Debug" display_page_mode="MapScreen" 
-                          image_name='Maps' />
+                          image_name='Maps' imageTintColor={undefined} textColor='#fff'/>
       <BT_Image_Clickable renderBool={true} top={tops[0]} left="70%" 
                           size_perc={0.20} nav={navigation} page_name="Simulate" 
                           page_navigate_str="GPS_Debug" display_page_mode="SimulateScreen"  
-                          image_name='Simulate'/>
+                          image_name='Simulate' imageTintColor={undefined} textColor='#fff'/>
       <BT_Image_Clickable renderBool={true} top={tops[1]} left="10%" 
                           size_perc={0.20} nav={navigation} page_name="Interval" 
                           page_navigate_str="GPS_Debug" display_page_mode="PaceBlockScreen"
-                          image_name='Interval'  />
+                          image_name='Interval' imageTintColor={undefined} textColor='#fff' />
       <BT_Image_Clickable renderBool={true} top={tops[1]} left="40%" 
                           size_perc={0.20} nav={navigation} page_name="Motivators" 
                           page_navigate_str="Motivators" display_page_mode="Our Indomitable Run-Gurus"
-                          image_name='Motivators'/>   
-      <BT_Circle_Clickable renderBool={false} top={tops[2]} left="10%" size_perc={0.25} nav={navigation} page_name="GPS Debug" page_navigate_str="GPS_Debug" display_page_mode="Debug Screen" />
+                          image_name='Motivators' imageTintColor={undefined} textColor='#fff'/>   
+      <BT_Circle_Clickable renderBool={true} top={tops[2]} left="10%" size_perc={0.25} nav={navigation} page_name="GPS Debug" page_navigate_str="GPS_Debug" display_page_mode="Debug Screen" />
       <BT_Circle_Clickable renderBool={false} top={tops[2]} left="40%" size_perc={0.25} nav={navigation} page_name="Moving Pts" page_navigate_str="Moveable_Points" />
       <BT_Circle_Clickable renderBool={false} top={tops[2]} left="70%" size_perc={0.25} nav={navigation} page_name="Screen Stack" page_navigate_str="Screen_Navigation" /> 
     </View>

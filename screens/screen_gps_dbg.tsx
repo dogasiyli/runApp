@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, TouchableOpacity, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BT_Circle_Text_GPS, Circle_Text_Error, Circle_Text_Color, DataAgeInSec, Circle_Image_Pace } from '../functions/display/buttons';
 import { useAppState } from '../assets/stateContext';    
@@ -7,7 +7,7 @@ import { saveToFile, saveToFile_multiple, getFormattedDateTime, getReadableDurat
 import { format_degree_to_string } from '../asyncOperations/utils';
 import { style_container } from '../sheets/styles';
 import { CALC_TIMES_FIXED, CALC_DISTANCES_FIXED } from '../assets/constants';
-import { SpeedTimeCalced_Dict, stDict_hasKey } from '../assets/types';
+import { stDict_hasKey } from '../assets/types';
 
 interface DebugScreenProps {
   insets: any;
@@ -16,7 +16,9 @@ interface DebugScreenProps {
 
 export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, screenText }) => {
     const { permits, current_location,
-        bool_record_locations, arr_location_history, 
+      bool_location_background_started, set_location_background_started,
+        bool_record_locations, enable_record_locations,
+         arr_location_history, 
         activeTime, passiveTime, totalTime, pos_array_diffs,
         stDict } = useAppState();
     const save_button_disabled = !permits["mediaLibrary"] || bool_record_locations || arr_location_history.length<=1;
@@ -136,6 +138,43 @@ export const DebugScreen: React.FC<DebugScreenProps> = ({ insets, screenText }) 
                 <Button disabled={save_button_disabled} onPress={() => saveToFile_multiple([arr_location_history, pos_array_diffs])} title="RecordMultiple" color = {save_button_disabled ? "#ff0000" : "#00ff00"} />
             </View>
         </View>
+
+        <View style={style_container.container}>
+        <View>
+          {bool_location_background_started ?
+              <TouchableOpacity onPress={() => set_location_background_started(false)}>
+                  <Text style={styles.btnText}>Stop Tracking</Text>
+              </TouchableOpacity>
+              :
+              <TouchableOpacity onPress={() => set_location_background_started(true)}>
+                  <Text style={styles.btnText}>Start Tracking</Text>
+              </TouchableOpacity>
+          }
+        </View>
+        <View>
+          {bool_record_locations ?
+              <TouchableOpacity onPress={() => enable_record_locations(false)}>
+                  <Text style={styles.btnText}>DontRecord</Text>
+              </TouchableOpacity>
+              :
+              <TouchableOpacity onPress={() => enable_record_locations(true)}>
+                  <Text style={styles.btnText}>Record</Text>
+              </TouchableOpacity>
+          }
+        </View>
+        </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  btnText: {
+      fontSize: 20,
+      backgroundColor: 'green',
+      color: 'white',
+      paddingHorizontal: 30,
+      paddingVertical: 10,
+      borderRadius: 5,
+      marginTop: 10,
+  },
+});
