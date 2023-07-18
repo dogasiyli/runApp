@@ -222,6 +222,7 @@ export const updateMapInformation = async (mapData, setMapData, bool_record_loca
         locations: [...prevState.locations, { latitude, longitude }],
         loc_boundaries: newBounds,
         region: newRegion,
+        initial_region: newRegion,
       }));
     }
   }

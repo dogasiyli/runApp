@@ -24,14 +24,28 @@ export const updateDistances = async (arr_location_history:object[], bool_record
     //console.log("ooooooooooooooooooooooooo3");
     return;
 };
-export const updateLocationHistory = async (arr_location_history:object[], bool_record_locations:boolean, current_location:any) => {
-    //console.log("+++++++++++++++++++++++++1");
-    // const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
-    // if (current_location["timestamp"] !== lastTimestamp && bool_record_locations) {
-    //   arr_location_history.push(current_location);
-    //   //console.log("POS COUNT :",arr_location_history.length);
-    // }
-    //console.log("ooooooooooooooooooooooooo1");
+export const updateLocationHistory = async (arr_location_history:object[], bool_record_locations:boolean, simulationParamsisPaused:boolean, current_location:any) => {
+  //console.log("updateLocationHistory:bool_record_locations:",bool_record_locations);
+  //console.log("updateLocationHistory:simulationParamsisPaused:",simulationParamsisPaused);
+  if (!simulationParamsisPaused) {
+      // we are in simulation mode
+      const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
+      if (current_location["timestamp"] !== lastTimestamp) {
+        arr_location_history.push(current_location);
+        if (arr_location_history[0]["coords"].accuracy == 0) {
+          //console.log("updateLocationHistory:removing 0::",arr_location_history[0]);
+          arr_location_history.shift();
+        }
+        //console.log("updateLocationHistory:add new::",arr_location_history.length);
+      }
+      else
+      {
+        //console.log("POS COUNT :t1:",current_location["timestamp"],",t2:",lastTimestamp);
+      }
+      //console.log("SIM_MODE:updateLocationHistory:arr_location_history.le is now::",arr_location_history.length);
+      return;
+    }
+    // we are not in simulation mode
     const hist_from_storage = await Storage.getLocations()
     console.log("ooooooooooooooooooooooooo1-updateLocationHistory");
     for (let i = arr_location_history.length; i < hist_from_storage.length; i++) {
@@ -61,16 +75,16 @@ export const updatePosDict = async (arr_location_history:object[], pos_array_kal
                                     current_location:any) => {
     //console.log("+++++++++++++++++++++++++2");
     if (arr_location_history && arr_location_history.length === 2) {
-      console.log("BLOCK-1:::::::::::::::::::::");
+      //console.log("BLOCK-1:::::::::::::::::::::");
       await initialize_post_dict(arr_location_history, set_pos_array_timestamps);
     }
     if (arr_location_history && arr_location_history.length > 2) {
-      console.log("BLOCK-2:::::::::::::::::::::");
+      //console.log("BLOCK-2:::::::::::::::::::::");
       await update_pos_array(arr_location_history, pos_array_kalman, pos_array_diffs, pos_array_timestamps, set_pos_array_timestamps);
-      console.log("updated pos_array_timestamps:",pos_array_timestamps);
-      console.log("updated pos_array_kalman and diff len:",pos_array_kalman.length,",",pos_array_diffs.length);
+      //console.log("updated pos_array_timestamps:",pos_array_timestamps);
+      //console.log("updated pos_array_kalman and diff len:",pos_array_kalman.length,",",pos_array_diffs.length);
     }
-    console.log("ooooooooooooooooooooooooo2");
+    //console.log("ooooooooooooooooooooooooo2");
 };
 
 const update_best = async (stDictEntry:SpeedTimeCalced, interval_type: 'distance'|'time', interval:number):Promise<SpeedTimeCalced> => {
@@ -86,7 +100,8 @@ const update_best = async (stDictEntry:SpeedTimeCalced, interval_type: 'distance
       stDictEntry.best_time = stDictEntry.last_time;
       stDictEntry.best_speed = kmh;
       stDictEntry.best_pace = pace;
-      //console.log("BRAVO:", interval, interval_type, "updated best of stDict (", kmh, ">bestSpeed))");
+      if (interval_type !== 'distance' && interval == 10)
+        console.log("BRAVO:", interval, interval_type, "updated best of stDict (", kmh, ">bestSpeed))");
     }
   }
   return stDictEntry;
@@ -104,35 +119,39 @@ export const updateCalcedResults = async (pos_array_diffs:object[], stDict:Speed
   }
 
   const skip_add_del_sec_lim = 4;
-  const plenX = Infinity; //69
-  const plenY = 0; //81
+  const plenX = 108; //Infinity; //
+  const plenY = 120; //0; //
 
   const n = pos_array_diffs.length;
   let stDictEntry = stDict[_key];
+  const print_some_debug_logs = _key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX;
+  if (print_some_debug_logs)
+    console.log(":::::::LETS DEBUG :::::: 10s-idx:", pos_array_diffs.length);
   if (stDictEntry != undefined) {
     //console.log("111stDictEntry of key ", _key, " is ", stDictEntry);
     //console.log("n is ", n, "stDictEntry.last_dist:", stDictEntry.last_dist, "stDictEntry.last_time:", stDictEntry.last_time, "stDictEntry.last_end:", stDictEntry.last_end);
-    if (_key==="10s" && pos_array_diffs.length<plenY && stDictEntry.last_speed>0)
+    if (print_some_debug_logs && stDictEntry.last_speed>0)
     {
-      console.log("111pos_array_diffs ", pos_array_diffs.length);
-      console.log("111stDictEntry of key ", _key, " is ", stDictEntry);
-      console.log("used pos_array_diffs:\n", pos_array_diffs.slice(stDictEntry.last_begin,stDictEntry.last_end))
+      console.log("PSDL_01::stDictEntry of key ", _key, " is ", stDictEntry);
+      console.log("PSDL_02::used pos_array_diffs:\n", pos_array_diffs.slice(stDictEntry.last_begin,stDictEntry.last_end))
     }
     while (stDictEntry.last_end < n-1 && ((interval_type === "distance" ? stDictEntry.last_dist : stDictEntry.last_time) < interval)) {
       if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_end][1])
       {
         stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
         stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];
+        if (print_some_debug_logs)
+          console.log("PSDL_03::stDictEntry.last_dist:", stDictEntry.last_dist, "stDictEntry.last_time:", stDictEntry.last_time, "stDictEntry.last_end:", stDictEntry.last_end);
       }
-      //else
-      //  console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%SKIPPING POS ARR ENTRY1 : ", stDictEntry.last_end)
+      else if (print_some_debug_logs)
+        console.log("PSDL_04::SKIPPING POS ARR ENTRY1 : ", stDictEntry.last_end)
       stDictEntry.last_end++;
-      if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
-        console.log("222stDictEntry of key ", _key, " is ", stDictEntry);
+      if (print_some_debug_logs)
+        console.log("PSDL_05::stDictEntry.last_dist:", stDictEntry.last_dist, "stDictEntry.last_time:", stDictEntry.last_time, "stDictEntry.last_end:", stDictEntry.last_end);
     }
     stDictEntry = await update_best(stDictEntry, interval_type, interval);
-    if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
-      console.log("333stDictEntry of key ", _key, " is ", stDictEntry);
+    if (print_some_debug_logs)
+      console.log("PSDL_06::stDictEntry of key ", _key, " is ", stDictEntry);
     while (stDictEntry.best_time > 0 && stDictEntry.last_end < n-1) {
       // if interval is less than what is accumulated
       // then we need to add the next point to the interval
@@ -144,12 +163,12 @@ export const updateCalcedResults = async (pos_array_diffs:object[], stDict:Speed
         if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_end][1])
         {
           stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
-          stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];    
+          stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];  
+          if (print_some_debug_logs)
+            console.log("PSDL_07::add the next point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
         }
-        //else
-        //  console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%SKIPPING POS ARR ENTRY2 : ", stDictEntry.last_end)
-        if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
-          console.log("444stDictEntry of key ", _key, " is ", stDictEntry);
+        else if (print_some_debug_logs)
+          console.log("PSDL_08::SKIP-add the next point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
       }
       //REMOVE THE FIRST POINT
       else {
@@ -158,14 +177,20 @@ export const updateCalcedResults = async (pos_array_diffs:object[], stDict:Speed
         {
           stDictEntry.last_dist -= pos_array_diffs[stDictEntry.last_begin-1][0];
           stDictEntry.last_time -= pos_array_diffs[stDictEntry.last_begin-1][1];  
+          if (print_some_debug_logs)
+            console.log("PSDL_10::remove the next first point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
         }
-        //else
-        //  console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%SKIPPING POS ARR ENTRY3 : ", stDictEntry.last_begin-1)
-        if (_key==="10s" && pos_array_diffs.length<plenY && pos_array_diffs.length>plenX)
-          console.log("555stDictEntry of key ", _key, " is ", stDictEntry);
+        else if (print_some_debug_logs)
+          console.log("PSDL_11::SKIP-remove the next first point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
       }
+      if (print_some_debug_logs)
+        console.log("PSDL_12::stDictEntry of key ", _key, " is ", stDictEntry);
       stDictEntry  = await update_best(stDictEntry, interval_type, interval);
     }
     await stDict_addEntry(stDict,_key,stDictEntry,setStDict);
+    if (print_some_debug_logs)
+      console.log("PSDL_13::stDictEntry of key ", _key, " is ", stDictEntry);
+    if (print_some_debug_logs)
+      console.log(":::::::DEBUGGED :::::: 10s-idx:", pos_array_diffs.length);
   }
 };

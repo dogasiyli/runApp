@@ -11,7 +11,7 @@ import { updateCalcedResults, updateDistances, updateLocationHistory, updatePosD
 import { addLocation, animate_point, define_tracking_job, updateMapInformation, updatePolyGroups } from '../asyncOperations/gpsOperations';
 import { loadSimulationData, startStopSimulation } from '../asyncOperations/simulationOperations';
 import { useLocationTracking } from '../functions/gps';
-import { getFormattedDateTime } from '../asyncOperations/fileOperations';
+import { getFormattedDateTime, getReadableDuration } from '../asyncOperations/fileOperations';
 
 export function Screen_Home({navigation}) {
   const insets = useSafeAreaInsets();
@@ -132,16 +132,16 @@ export function Screen_Home({navigation}) {
       const date = new Date(timestamp);
       return date.toLocaleString();
     };
-    console.log("current_location changed to:", formatTimestamp(current_location.timestamp))
+    //console.log("current_location changed to:", formatTimestamp(current_location.timestamp))
     const fetchData = async () => {
       const first_if = (bool_record_locations || !simulationParams.isPaused) && (current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"]);
-      console.log("fetchData:bool_record_locations(",bool_record_locations,"), simulationParams.isPaused(",simulationParams.isPaused,")");
-      console.log("current_location.coords.accuracy(",current_location.coords.accuracy,")");
+      //console.log("fetchData:bool_record_locations(",bool_record_locations,"), simulationParams.isPaused(",simulationParams.isPaused,")");
+      //console.log("current_location.coords.accuracy(",current_location.coords.accuracy,")");
       if (bool_record_locations && current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])
         await addLocation(current_location, arr_location_history);
       //console.log("try fetchData ", isCalculating, bool_record_locations);
       if (first_if) {
-        await updateLocationHistory(arr_location_history, (bool_record_locations || !simulationParams.isPaused), current_location);
+        await updateLocationHistory(arr_location_history, bool_record_locations, simulationParams.isPaused, current_location);
         await updatePosDict(arr_location_history, pos_array_kalman, pos_array_diffs, 
                             pos_array_timestamps, set_pos_array_timestamps, current_location);
         await updateDistances(arr_location_history, (bool_record_locations || !simulationParams.isPaused), pos_array_diffs, current_location, setCoveredDistance);
@@ -188,7 +188,30 @@ export function Screen_Home({navigation}) {
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[1]);
         await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[2]);
       }
-      //console.log(stDict)
+      let stSummary = '';
+      for (const key in stDict) {
+        const lastPace = stDict[key].last_pace;
+        const paceStr = getReadableDuration(lastPace*60000);
+        const distance = key;
+        stSummary += `${distance}|${paceStr} /// `;
+      }
+      if (pos_array_diffs.length > 0)
+      {
+        const last_diff = pos_array_diffs.length > 0 ? pos_array_diffs[pos_array_diffs.length-1] : null;
+        const last_diff_long = last_diff[1]>2;
+        console.log("*******************************************************")
+        console.log("pos_array_diffs.length:",pos_array_diffs.length)
+        last_diff_long ? console.log("++++++++++++++++++last_diff:", last_diff) : null;
+        console.log("TrainDuration:", getReadableDuration(current_location.timestamp-arr_location_history[0]["timestamp"]))
+        console.log("stDict summary:", stSummary);
+        if (last_diff_long)
+        { setSimulationParams((prevParams) => ({
+               ...prevParams,
+               isPaused: true,
+          }));
+  
+        } 
+      }
     })();
 
     return () => {
