@@ -106,21 +106,96 @@ const update_best = async (stDictEntry:SpeedTimeCalced, interval_type: 'distance
   }
   return stDictEntry;
 }
+const add_next_point = async (stDictEntry:SpeedTimeCalced, pos_array_diffs:object[], 
+                              skip_add_del_sec_lim:number,
+                              verbose_id:number,
+                              verbose:boolean=false):Promise<SpeedTimeCalced> => {
+  //adds the last entry if:
+  // 1. the "last entry to add" is ok according to skip_add_del_sec_lim
+  const n = pos_array_diffs.length;
+  if (stDictEntry.last_end >= n-1)
+  {
+    if (verbose)
+      console.log("PSDL_",verbose_id,"0::stDictEntry.last_end:", stDictEntry.last_end, "n:", n);
+      return stDictEntry;
+  }
+  if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_end][1])
+  {
+    stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
+    stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];
+    if (verbose)
+      console.log("PSDL_",verbose_id,"1::ADDED", stDictEntry.last_end, "d:", stDictEntry.last_dist, ",t:", stDictEntry.last_time);
+  }
+  else if (verbose)
+    console.log("PSDL_",verbose_id,"2::SKIP ADD: ", stDictEntry.last_end, ":::", pos_array_diffs[stDictEntry.last_end][1])
+  stDictEntry.last_end++;
+
+  return stDictEntry;
+}
+const remove_begin_points = async (stDictEntry:SpeedTimeCalced, pos_array_diffs:object[], 
+                              skip_add_del_sec_lim:number,
+                              interval_type: 'distance'|'time', interval:number,
+                              verbose_id:number,
+                              verbose:boolean=false):Promise<SpeedTimeCalced> => {
+  //removes the beginning entry if:
+  // 1. the "beginning entry to remove" is ok according to skip_add_del_sec_lim
+  // 2. removing the beginning point does not make the interval too short
+  const n = pos_array_diffs.length;
+  let remove_next_first_point = true;
+  while (remove_next_first_point)
+  {
+    if (verbose)
+      console.log("PSDL_",verbose_id,"0::TRY REMOVE:", stDictEntry.last_begin)
+    const cur_interval = (interval_type === "distance" ? stDictEntry.last_dist : stDictEntry.last_time);
+    const time_diff = pos_array_diffs[stDictEntry.last_begin][1];
+    const dist_to_remove = (skip_add_del_sec_lim>time_diff ? pos_array_diffs[stDictEntry.last_begin][0] : 0);
+    const time_to_remove = (skip_add_del_sec_lim>time_diff ? pos_array_diffs[stDictEntry.last_begin][1] : 0);
+    const x_to_remove = (interval_type === "distance" ? dist_to_remove : time_to_remove);
+    const new_interval = cur_interval - (skip_add_del_sec_lim>time_diff ? x_to_remove : 0);
+    if (new_interval>=interval)
+    {
+      stDictEntry.last_dist -= dist_to_remove;
+      stDictEntry.last_time -= time_to_remove;  
+      stDictEntry.last_begin++;
+      if (verbose)
+        console.log("PSDL_",verbose_id,"1::COULD REMOVE:", stDictEntry.last_begin-1, "d:", stDictEntry.last_dist, ",t:", stDictEntry.last_time)
+    }
+    else 
+    {
+      remove_next_first_point = false;
+      if (verbose)
+        console.log("PSDL_",verbose_id,"3::DO NOT REMOVE:", stDictEntry.last_begin, "-new_interval:", new_interval);
+    }
+  }
+  return stDictEntry;
+}
+const print_verbose_PAD = (stDictEntry:SpeedTimeCalced, pos_array_diffs:object[]) => {
+  console.log("PSDL_02::used pos_array_diffs:[", stDictEntry.last_begin, "-", stDictEntry.last_end,"]")
+  let d=0,t=0;
+  for (let i = stDictEntry.last_begin; i < stDictEntry.last_end; i++) {
+    const dist = pos_array_diffs[i][0];
+    const sec = pos_array_diffs[i][1];
+    const idx = pos_array_diffs[i][2];
+    const [pace, kmh] = calc_run_params(dist, sec);
+    d+=dist;
+    t+=sec;
+    console.log(`${i}:${idx}: ${dist.toFixed(2)}, ${sec.toFixed(2)}, ${kmh.toFixed(2)} km/h`);
+  }
+  const [pace, kmh_sum] = calc_run_params(d, t);
+  console.log(`sum: ${d.toFixed(2)}, ${t.toFixed(2)}, ${kmh_sum.toFixed(2)} km/h`);
+}
 export const updateCalcedResults = async (pos_array_diffs:object[], stDict:SpeedTimeCalced_Dict, 
                                           setStDict:React.Dispatch<React.SetStateAction<SpeedTimeCalced_Dict>>,
                                           interval_type: 'distance'|'time',
                                           interval:number,) => {
   const _key = `${interval}` + (interval_type === "distance" ? "m" : "s");
-  //console.log("key is ", _key, " in stDict");
   if (!stDict_hasKey(stDict, _key)) {
-     //console.log("will initialize ", _key, " in stDict");
      await stDict_addEntry(stDict,_key,SPEED_TIME_CALCED_INIT,setStDict);
-     //console.log("initialized ", _key, " in stDict");
   }
 
   const skip_add_del_sec_lim = 4;
-  const plenX = 108; //Infinity; //
-  const plenY = 120; //0; //
+  const plenX = 0; //Infinity; //
+  const plenY = 80; //0; //
 
   const n = pos_array_diffs.length;
   let stDictEntry = stDict[_key];
@@ -130,66 +205,19 @@ export const updateCalcedResults = async (pos_array_diffs:object[], stDict:Speed
   if (stDictEntry != undefined) {
     //console.log("111stDictEntry of key ", _key, " is ", stDictEntry);
     //console.log("n is ", n, "stDictEntry.last_dist:", stDictEntry.last_dist, "stDictEntry.last_time:", stDictEntry.last_time, "stDictEntry.last_end:", stDictEntry.last_end);
-    if (print_some_debug_logs && stDictEntry.last_speed>0)
+    if (print_some_debug_logs)
     {
       console.log("PSDL_01::stDictEntry of key ", _key, " is ", stDictEntry);
-      console.log("PSDL_02::used pos_array_diffs:\n", pos_array_diffs.slice(stDictEntry.last_begin,stDictEntry.last_end))
+      print_verbose_PAD(stDictEntry, pos_array_diffs);
     }
-    while (stDictEntry.last_end < n-1 && ((interval_type === "distance" ? stDictEntry.last_dist : stDictEntry.last_time) < interval)) {
-      if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_end][1])
-      {
-        stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
-        stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];
-        if (print_some_debug_logs)
-          console.log("PSDL_03::stDictEntry.last_dist:", stDictEntry.last_dist, "stDictEntry.last_time:", stDictEntry.last_time, "stDictEntry.last_end:", stDictEntry.last_end);
-      }
-      else if (print_some_debug_logs)
-        console.log("PSDL_04::SKIPPING POS ARR ENTRY1 : ", stDictEntry.last_end)
-      stDictEntry.last_end++;
-      if (print_some_debug_logs)
-        console.log("PSDL_05::stDictEntry.last_dist:", stDictEntry.last_dist, "stDictEntry.last_time:", stDictEntry.last_time, "stDictEntry.last_end:", stDictEntry.last_end);
+    while (stDictEntry.last_end < n-1) {
+      stDictEntry = await add_next_point(stDictEntry, pos_array_diffs, skip_add_del_sec_lim, 1, print_some_debug_logs);
+      stDictEntry = await remove_begin_points(stDictEntry, pos_array_diffs, skip_add_del_sec_lim, interval_type, interval, 2, print_some_debug_logs);
+      stDictEntry = await update_best(stDictEntry, interval_type, interval);
     }
-    stDictEntry = await update_best(stDictEntry, interval_type, interval);
     if (print_some_debug_logs)
-      console.log("PSDL_06::stDictEntry of key ", _key, " is ", stDictEntry);
-    while (stDictEntry.best_time > 0 && stDictEntry.last_end < n-1) {
-      // if interval is less than what is accumulated
-      // then we need to add the next point to the interval
-      // else we need to remove the first point from the interval
-
-      //ADD THE NEXT POINT
-      if ((interval_type === "distance" ? stDictEntry.last_dist : stDictEntry.last_time) < interval) {
-        stDictEntry.last_end++;
-        if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_end][1])
-        {
-          stDictEntry.last_dist += pos_array_diffs[stDictEntry.last_end][0];
-          stDictEntry.last_time += pos_array_diffs[stDictEntry.last_end][1];  
-          if (print_some_debug_logs)
-            console.log("PSDL_07::add the next point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
-        }
-        else if (print_some_debug_logs)
-          console.log("PSDL_08::SKIP-add the next point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
-      }
-      //REMOVE THE FIRST POINT
-      else {
-        stDictEntry.last_begin++;
-        if (skip_add_del_sec_lim>pos_array_diffs[stDictEntry.last_begin-1][1])
-        {
-          stDictEntry.last_dist -= pos_array_diffs[stDictEntry.last_begin-1][0];
-          stDictEntry.last_time -= pos_array_diffs[stDictEntry.last_begin-1][1];  
-          if (print_some_debug_logs)
-            console.log("PSDL_10::remove the next first point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
-        }
-        else if (print_some_debug_logs)
-          console.log("PSDL_11::SKIP-remove the next first point: last_dist:", stDictEntry.last_dist, "last_time:", stDictEntry.last_time, "last_end:", stDictEntry.last_end)  
-      }
-      if (print_some_debug_logs)
-        console.log("PSDL_12::stDictEntry of key ", _key, " is ", stDictEntry);
-      stDictEntry  = await update_best(stDictEntry, interval_type, interval);
-    }
+      console.log("PSDL_30::stDictEntry of key ", _key, " is ", stDictEntry);
     await stDict_addEntry(stDict,_key,stDictEntry,setStDict);
-    if (print_some_debug_logs)
-      console.log("PSDL_13::stDictEntry of key ", _key, " is ", stDictEntry);
     if (print_some_debug_logs)
       console.log(":::::::DEBUGGED :::::: 10s-idx:", pos_array_diffs.length);
   }

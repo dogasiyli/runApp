@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableHighlight, View, Text } from 'react-native';
+import { TouchableHighlight, View, Text, DimensionValue } from 'react-native';
 import { CircleImagePaceV1Props, CircleTimerTriangleProps, CoveredDistanceProps, PickedPaceProps } from '../../assets/interface_definitions';
 import { Circle_Image_Pace, Circle_Text_Color, BT_Toggle_Image, BT_Picker, BT_Functional_Image } from '../display/buttons';
 
@@ -19,6 +19,7 @@ export const Circle_Image_Pace_v1: React.FC<CircleImagePaceV1Props> = ({
   top, left,
   beforeText,
   size,
+  text_color,
 }) => {
     if (stDict === undefined)
         return;
@@ -41,6 +42,7 @@ export const Circle_Image_Pace_v1: React.FC<CircleImagePaceV1Props> = ({
       left={left}
       beforeText={beforeText}
       size={size}
+      text_color={text_color}
     />
   );
 };
@@ -77,6 +79,9 @@ export const Circle_Timer_Triangle: React.FC<CircleTimerTriangleProps> = ({
 
     const circleW = circleSize; // Adjust the percentage as needed
 
+    const top1 = top_tot_time.toFixed(2)+'%' as DimensionValue;
+    const left1 = left_tot_time.toFixed(2)+'%' as DimensionValue;
+
     return (
         <>
             {/*total time*/}
@@ -84,7 +89,7 @@ export const Circle_Timer_Triangle: React.FC<CircleTimerTriangleProps> = ({
                        dispVal={getReadableDuration(totalTime)}
                        circleSize={circleW}
                        backgroundColor="rgb(200,200,200)" 
-                       top={top_tot_time.toFixed(2)+'%'} left={left_tot_time.toFixed(2)+'%'}
+                       top={top1} left={left1}
                        afterText='' beforeText=''/>
             {/*active time*/}
             <Circle_Text_Color renderBool={true}
@@ -149,12 +154,11 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
     dist_type_totalT_lastF,
     activeTime, 
     pace_type_aveT_curF, set_pace_type_aveT_curF,
-    top, left
+    top, left,
+    text_color="white"
   }) => {
     if (!renderBool)
         return;
-
-    //console.log("Circle_Pace_Picked: ", pace_type_aveT_curF, top, left);
  
     // show the pace for the whole run or the last part
 
@@ -178,14 +182,16 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
                 renderBool={stDict !== undefined}
                 stDict={stDict} value={CALC_TIMES_FIXED[1]}
                 time_dist={'time'} last_or_best = {'last'}
-                top={"0%"} left={"0%"} beforeText={'seconds'}/>
+                top={"0%"} left={"0%"} beforeText={'seconds'}
+                text_color={text_color}/>
             </TouchableHighlight>
-            <Text style={{marginTop:"0%", color:"#ffffff"}}>{picked_pace_exp}</Text>
+            <Text style={{marginTop:"0%", color:text_color}}>{picked_pace_exp}</Text>
             </View>
         )
     else
      return(
-        <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+        <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, 
+                       justifyContent: 'flex-start', alignItems: 'center' }}>
         <TouchableHighlight underlayColor="transparent" style={{ padding: 50 }} 
                       onPress={() => toggle(set_pace_type_aveT_curF)}>
             <Circle_Image_Pace
@@ -195,9 +201,14 @@ export const Circle_Pace_Picked: React.FC<PickedPaceProps> = ({
                 top={"0%"}
                 left={"0%"}
                 beforeText={"meters"}
+                text_color={text_color}
             />
         </TouchableHighlight>
-        <Text style={{marginTop:"0%", color:"#ffffff"}}>{picked_pace_exp}</Text>
+        <View style={{ alignItems: 'center', alignContent:"center", alignSelf:"center" }}>
+          <Text style={{marginTop:"0%", color:text_color, alignSelf:"center", justifyContent:"center"}}>
+              {picked_pace_exp}
+          </Text>
+        </View>
         </View>
     );
 };
@@ -420,7 +431,7 @@ export const IntervalRow: React.FC<IntervalRowProps> = ({
         circleSize={time_size}
         backgroundColor= { cur_idx!=last_idx ? "rgb(50,50,50)" :  "rgb(50,200,200)"} 
         textColor= { cur_idx!=last_idx ? "rgb(255,255,255)" :  "rgb(0,0,0)"} 
-        top={new_top2}
+        top={new_top2 as DimensionValue}
         left={'40%'}
         afterText={ cur_idx==last_idx ? "DIST" :  ""} 
         beforeText=''
@@ -431,7 +442,7 @@ export const IntervalRow: React.FC<IntervalRowProps> = ({
       circleSize={time_size}
       backgroundColor= { cur_idx!=last_idx ? "rgb(50,50,50)" :  "rgb(50,200,200)"} 
       textColor= { cur_idx!=last_idx ? "rgb(255,255,255)" :  "rgb(0,0,0)"} 
-      top={new_top2}
+      top={new_top2 as DimensionValue}
       left={'10%'}
       afterText={ cur_idx==last_idx ? "TIME" :  ""} 
       beforeText=''

@@ -136,41 +136,36 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
       const POLY_LINE_COLORS = {"dark": "#fff","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
       const COL_Underlay = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
       const COL_ImgBcg = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
-      const COL_ImgTxt = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#444","standard": "#a43a22"};
-      const COL_Border1 = {"dark": "#ff0","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
-      const COL_Border2 = {"dark": "#000","aubergine": "#8ec3b9","retro": "#447530","silver": "#9eaa9e","standard": "#a43a22"};
+      const COL_Bckg = {"dark": "#aaaa00dd","aubergine": "#8ec3b9bb","retro": "#447530bb","silver": "#9eaa9ebb","standard": "#a43a22bb"};
+      const COL_Txt = {"dark": "#00ff","aubergine": "#404d56ff","retro": "#440358ff","silver": "#403340ff","standard": "#332185ff"};
       const showRunner = true;
 
   return (
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: COL_Bckg[mapData.viewProps.mapTypeString] }}>
       <StatusBar style="auto" />
 
 
-      {/*--------ROW 0-COL 1----------*/}{/*current time*/}
-      <Circle_Text_Color renderBool={false} 
-                        dispVal={getFormattedDateTime("onlyclock")}
-                        floatVal={-1}
-                        circleSize={0.24}
-                        top="-5%" left="5%"
-                        afterText='' beforeText='Now:'
-                        textColor='white'
-                        backgroundColor='transparent'
-                        />                     
+      <AreaButtonBackgroundProps renderBool={true} top="0%" left="0%" height="20%" width="100%"
+                                 backgroundColor= {COL_Bckg[mapData.viewProps.mapTypeString]}/>                 
       {/*--------ROW 0-COL 2/3----------*/}
       <Circle_Timer_Triangle renderBool={false}
                             top={25} left={10}
                               activeTime={activeTime} passiveTime={passiveTime} totalTime={totalTime}
                               />
 
-
       <View style={{flex: 1, flexDirection:"row", alignSelf: 'center', alignItems:"center", alignContent:"center", 
-                    top:"3%", left:"25%", position:"absolute",
+                    top:"0%", left:"29%", position:"absolute",
                     width: '45%' }}>
-      <Text style={{ alignSelf: 'center', marginRight:10, color:  COL_ImgTxt[mapData.viewProps.mapTypeString]} }>
+      <Text style={{ alignSelf: 'center', marginRight:10, color:  COL_Txt[mapData.viewProps.mapTypeString]} }>
           Detail({mapData.viewProps.detailValue.toFixed(0)}) 
         </Text>
+      </View>
+
+      <View style={{flex: 1,flexDirection: "row",alignSelf: "center",alignItems: "center",
+        alignContent: "center",top: -40,left: -10,
+        position: "absolute",width: 300, transform:[{rotate: "-90deg"}], }}>
       <Slider
-          style={{width: '30%', alignSelf: 'center', backgroundColor: COL_ImgBcg[mapData.viewProps.mapTypeString]  }}
+          style={{width: '30%', alignSelf: 'center', backgroundColor: COL_Txt[mapData.viewProps.mapTypeString],}}
           minimumValue={3}
           maximumValue={4}
           step={1}
@@ -181,34 +176,34 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
 
       <BT_SwitchingImages renderBool={true} top="2%" left="63%" im_current={mapData.viewProps.mapTypeString} possible_images={map_type_strings}
                           underlayColor={COL_Underlay[mapData.viewProps.mapTypeString]}  
-                          imageBackgroundColor = {COL_ImgBcg[mapData.viewProps.mapTypeString]}
-                          borderColor = {COL_Border1[mapData.viewProps.mapTypeString]}
-                          txtColor={COL_ImgTxt[mapData.viewProps.mapTypeString]}
+                          imageBackgroundColor = {COL_Txt[mapData.viewProps.mapTypeString]}
+                          borderColor = {COL_Txt[mapData.viewProps.mapTypeString]}
+                          txtColor={COL_Txt[mapData.viewProps.mapTypeString]}
                           setNewImg={handleMapTypeStringChange} size={0.15} press_type="both" />
 
-      <BT_SwitchingImages renderBool={true} top="12%" left="83%" im_current={mapData.viewProps.centerAt} 
+      <BT_SwitchingImages renderBool={true} top="2%" left="83%" im_current={mapData.viewProps.centerAt} 
                           possible_strings={['runner', 'map']} possible_images={['zoom', 'zoom']}
                           underlayColor={COL_Underlay[mapData.viewProps.mapTypeString]} 
-                          borderColor = {COL_Border2[mapData.viewProps.mapTypeString]}
-                          imageBackgroundColor={COL_ImgBcg[mapData.viewProps.mapTypeString]}
-                          txtColor={COL_ImgTxt[mapData.viewProps.mapTypeString]}
-                          setNewImg={handleMapZoomAtChange} size={0.13} press_type="both" />
+                          borderColor = {COL_Txt[mapData.viewProps.mapTypeString]}
+                          imageBackgroundColor={COL_Txt[mapData.viewProps.mapTypeString]}
+                          txtColor={COL_Txt[mapData.viewProps.mapTypeString]}
+                          setNewImg={handleMapZoomAtChange} size={0.15} press_type="both" />
 
       {/*--------ZOOOOOOM IN----------*/}
       <View
       style={{flex: 1,flexDirection: "row",alignSelf: "center",alignItems: "center",
-        alignContent: "center",top: "26%",left: "83%",
+        alignContent: "center",top: "0%",left: "48%",
         position: "absolute",width: "40%",
       }}
       >
-      <Text style={{ color: COL_ImgTxt[mapData.viewProps.mapTypeString]} }>Zoom In</Text>
+      <Text style={{ color: COL_Txt[mapData.viewProps.mapTypeString]} }>Zoom In</Text>
       </View>
 
       <View style={{flex: 1,flexDirection: "row",alignSelf: "center",alignItems: "center",
-        alignContent: "center",top: "33%",left: "76%",
-        position: "absolute",width: "30%", transform:[{rotate: "-90deg"}], }}>
+        alignContent: "center",top: 50,left: 148,
+        position: "absolute",width: 120, transform:[{rotate: "-90deg"}], }}>
       <Slider
-        style={{ width: "80%", alignSelf: "center", backgroundColor: COL_ImgBcg[mapData.viewProps.mapTypeString] }}
+        style={{ width: "80%", alignSelf: "center", backgroundColor: COL_Txt[mapData.viewProps.mapTypeString] }}
         minimumValue={13}
         maximumValue={19}
         step={1}
@@ -221,31 +216,31 @@ export const MapScreen: React.FC<MapScreenProps> = ({ insets }) => {
       {/*--------ZOOOOOOM OUT----------*/}
       <View
       style={{flex: 1,flexDirection: "row",alignSelf: "center",alignItems: "center",
-        alignContent: "center",top: "43%",left: "81%",
+        alignContent: "center",top: "17%",left: "46%",
         position: "absolute",width: "40%",
       }}
       >
-        <Text style={{ color: COL_ImgTxt[mapData.viewProps.mapTypeString] }}>Zoom Out</Text>
+        <Text style={{ color: COL_Txt[mapData.viewProps.mapTypeString] }}>Zoom Out</Text>
       </View>
 
-  
       <Circle_Pace_Picked renderBool={true}
                         covered_dist={coveredDistance} stDict={stDict}
                         dist_type_totalT_lastF={dist_type_totalT_lastF}
                         activeTime={activeTime}
                         pace_type_aveT_curF={pace_type_aveT_curF} set_pace_type_aveT_curF={set_pace_type_aveT_curF}
-                        top="110%" left="5%"/> 
+                        top="3%" left="5%" 
+                        text_color={COL_Txt[mapData.viewProps.mapTypeString]}/> 
 
 
-      <View style={{flex: 1, position:"absolute", alignItems:"center", justifyContent:"center", top:"1%", width:"100%", height:"100%",zIndex:-200}}>
+      <View style={{flex: 1, position:"absolute", alignItems:"center", justifyContent:"center", top:0, width:"100%", height:"105%",zIndex:-200}}>
       {mapData.region.latitude === 0.0 
           ? (<Text style={{ color: "white" }}>Waiting For Location</Text>) 
           : (
         <MapView provider={PROVIDER_GOOGLE} 
-                  style={{backgroundColor:"#fff", width:"98%",height:"99%"}}
+                  style={{backgroundColor:"#fff", width:"100%",height:"100%"}}
                   ref={mapRef}
                   initialRegion={mapData.initial_region}
-                  showsUserLocation={true}
+                  showsUserLocation={false}
                   showsCompass={false}
                   rotateEnabled={true}
                   zoomEnabled={false}

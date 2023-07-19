@@ -270,7 +270,7 @@ export const Circle_Text_Color: React.FC<CircleTextColorProps> = ({
   const circleW = width * circleSize; // Adjust the percentage as needed
 
   return (
-    <View style={{ flex: 1, position: 'absolute', marginTop: top, left: left, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+    <View style={{ flex: 1, position: 'absolute', marginTop: top!, left: left!, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
       <View style={{ borderRadius: circleW / 2, overflow: 'hidden' }}>
         <Text
           disabled={false}
@@ -380,6 +380,7 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
   size = 0.15,
   top,
   left,
+  text_color="white",
 }) => {
   if (!renderBool) {
     return null;
@@ -411,14 +412,14 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
       style={{
         flex: 1,
         position: 'absolute',
-        marginTop: top,
-        left: left,
+        marginTop: top as DimensionValue,
+        left: left as DimensionValue,
         justifyContent: 'flex-start',
         alignItems: 'center',
         alignContent: 'center',
       }}
     >
-      <Text style={{ bottom: circleSize / 8, textAlign: 'center', color: 'yellow', fontSize:12 }}>
+      <Text style={{ bottom: circleSize / 8, textAlign: 'center', color: text_color, fontSize:12 }}>
           {beforeText}
         </Text>
       <View style={{ borderRadius: circleSize / 2, overflow: 'hidden', alignItems:'center' }}>
@@ -433,10 +434,10 @@ export const Circle_Image_Pace: React.FC<CircleImagePaceProps> = ({
             marginBottom: 10,
           }}
         />
-        <Text style={{ bottom: circleSize / 8, textAlign: 'center', color:"white", fontSize:20 }}>
+        <Text style={{ bottom: circleSize / 8, textAlign: 'center', color:text_color, fontSize:20 }}>
           {afterText}
         </Text>        
-        <Text style={{ bottom: circleSize / 5.5, textAlign: 'center', color:"white", fontSize:afterTextFontSize }}>
+        <Text style={{ bottom: circleSize / 5.5, textAlign: 'center', color:text_color, fontSize:afterTextFontSize }}>
           {speed_kmh.toFixed(1)}kmh
         </Text>
       </View>
@@ -496,7 +497,7 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
   //console.log("toggle_val:",toggle_val)
 
   return (
-    <View style={{ flex: 1, position: 'absolute', top:top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+    <View style={{ flex: 1, position: 'absolute', top:top as DimensionValue, left: left as DimensionValue, justifyContent: 'flex-start', alignItems: 'center' }}>
       <TouchableHighlight underlayColor={"transparent"} 
                           onPress={press_type === "short" || press_type === "both" ? () => toggle_func(toggle_val) : undefined}
                           onLongPress={press_type === "long" || press_type === "both" ? () => toggle_func(toggle_val) : undefined}>
@@ -533,8 +534,8 @@ export const BT_Toggle_Image: React.FC<ToggleImageProps> = ({
 
 interface BT_Picker_Props {
   renderBool: boolean;
-  top:DimensionValue; 
-  left:DimensionValue;
+  top:DimensionValue | string; 
+  left:DimensionValue | string;
   width?:DimensionValue;
   pickableBool?:boolean;
   items:string[] | number[];
@@ -573,7 +574,7 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     return (  
       <View style={{
         flex: 1, position: 'absolute',
-        top:top, left:left, width:width,
+        top:top as DimensionValue, left:left as DimensionValue, width:width,
         alignContent:"center", alignSelf:"center",
         backgroundColor: '#000088',
         borderRadius: borderRadius, borderWidth:borderWidth, borderColor:borderColor, overflow: 'hidden'}}>
@@ -600,8 +601,8 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
 
   interface FunctionalImageProps {
     renderBool: boolean;
-    top:DimensionValue; 
-    left:DimensionValue;
+    top:DimensionValue | string; 
+    left:DimensionValue | string;
     size:number;
     img_src:string;
     func: (...args: any[]) => void;
@@ -631,7 +632,7 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     //});
   
     return (
-      <View style={{ flex: 1, position: 'absolute', top:top, left: left, justifyContent: 'flex-start', alignItems: 'center' }}>
+      <View style={{ flex: 1, position: 'absolute', top:top as DimensionValue, left: left as DimensionValue, justifyContent: 'flex-start', alignItems: 'center' }}>
         <TouchableHighlight underlayColor={"transparent"} 
                             onPress={press_type === "short" || press_type === "both" ? () => func(params) : undefined}
                             onLongPress={press_type === "long" || press_type === "both" ? () => func(params) : undefined}>
@@ -680,7 +681,7 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     belowText?: string;
     imageBackgroundColor?: string;
     borderColor?: string;
-    txtColor?: string;
+    txtColor: string;
   }
   
   export const BT_SwitchingImages: React.FC<SwitchingImagesProps> = ({
@@ -696,7 +697,7 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     belowText = undefined,
     imageBackgroundColor = 'transparent',
     borderColor = "transparent",
-    txtColor = "yellow",
+    txtColor,
   }) => {
     if (!renderBool) {
       return null;
@@ -813,6 +814,7 @@ export const BT_Picker: React.FC<BT_Picker_Props> = ({
     
     borderRadius?:number;
     width?:DimensionValue;
+    left?:DimensionValue;
     backgroundColor?:string;
     zIndex?:number;
 
@@ -826,6 +828,7 @@ export const AreaButtonBackgroundProps: React.FC<AreaButtonBackgroundProps> = ({
   renderBool, 
   top, height,
   borderRadius=20,
+  left="0%",
   width="100%",
   backgroundColor= 'rgba(255, 255, 255, 0.5)',
   zIndex=-20,
@@ -834,7 +837,7 @@ export const AreaButtonBackgroundProps: React.FC<AreaButtonBackgroundProps> = ({
     return null;
   }
   return (  
-    <View style={{ flex: 1, position: 'absolute', top:top, height: height, width:width, borderRadius:borderRadius, 
+    <View style={{ flex: 1, position: 'absolute', top:top, left:left, height:height, width:width, borderRadius:borderRadius, 
                    backgroundColor: backgroundColor, zIndex:zIndex }}>
     </View>  
   );

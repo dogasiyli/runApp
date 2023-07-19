@@ -30,7 +30,7 @@ export default function App() {
     <View style={style_container.container}>
       <AppStateProvider>
         <NavigationContainer>
-        <Stack.Navigator screenOptions={{headerStyle: { backgroundColor: '#a7f' },}}>
+        <Stack.Navigator screenOptions={{headerStyle: { backgroundColor: '#5555' },}}>
           <Stack.Screen name="Home" component={Screen_Home} />
           <Stack.Screen name="GPS_Debug" component={Screen_GPS_Debug} options={({ route }) => ({ title: route.params?.display_page_mode ||  "Debug GPS" })} />
           <Stack.Screen name="Moveable_Points" component={Screen_MoveablePoints} />

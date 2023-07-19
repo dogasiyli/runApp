@@ -18,8 +18,8 @@ export interface CircleTextGPSProps {
 }
 export interface ToggleImageProps {
   renderBool: boolean;
-  top:DimensionValue; 
-  left:DimensionValue;
+  top:DimensionValue | string; 
+  left:DimensionValue | string;
   size:number;
   bool_val:boolean;
   set_bool_val:any;
@@ -81,9 +81,10 @@ export interface CircleTextColorProps {
     time_diff: number;
     beforeText?: string;
     afterText?: string;
-    top: DimensionValue;
-    left: DimensionValue;
+    top: DimensionValue | string;
+    left: DimensionValue | string;
     size?:number;
+    text_color?:string;
   }
 
   export interface CircleImagePaceV1Props {
@@ -97,6 +98,7 @@ export interface CircleTextColorProps {
     top: DimensionValue;
     left: DimensionValue;
     size?:number;
+    text_color:string;
   }
 
 
@@ -133,6 +135,7 @@ export interface PickedPaceProps {
   set_pace_type_aveT_curF:any;
   top:DimensionValue; 
   left:DimensionValue;
+  text_color?:string;
 }
 
 export interface IMapLocation {

@@ -252,7 +252,7 @@ export function Screen_Home({navigation}) {
   return (
     <>
     
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#a7f" }}>
+    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#555" }}>
       <BT_Image_Clickable renderBool={true} top={tops[0]} left="10%" 
                           size_perc={0.20} nav={navigation} page_name="Speeds" 
                           page_navigate_str="GPS_Debug" display_page_mode="SpeedScreens" 
