@@ -1,16 +1,18 @@
 import { DimensionValue, View } from 'react-native';
+import Dialog from "react-native-dialog";
 import * as TaskManager from 'expo-task-manager';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BT_Circle_Clickable, BT_Image_Clickable } from '../functions/display/buttons';
-import { useEffect, useRef } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { getPermits } from '../asyncOperations/requests';
 import { useAppState } from '../assets/stateContext';
 import { CALC_DISTANCES_FIXED, CALC_TIMES_FIXED, FIXED_DISTANCES, INIT_TIMES } from '../assets/constants';
-import { handleTimerInterval } from '../asyncOperations/utils';
+import { handleTimerInterval, update_pos_array } from '../asyncOperations/utils';
 import { updateCalcedResults, updateDistances, updateLocationHistory, updatePosDict } from '../asyncOperations/asyncCalculations';
-import { addLocation, animate_point, define_tracking_job, updateMapInformation, updatePolyGroups } from '../asyncOperations/gpsOperations';
+import { animate_point, define_tracking_job, updateMapInformation, updatePolyGroups, loadAutoSavedLocations } from '../asyncOperations/gpsOperations';
 import { loadSimulationData, startStopSimulation } from '../asyncOperations/simulationOperations';
 import { useLocationTracking } from '../functions/gps';
+import * as Storage from '../functions/gps/storage';
 import { getFormattedDateTime, getReadableDuration } from '../asyncOperations/fileOperations';
 
 export function Screen_Home({navigation}) {
@@ -30,11 +32,59 @@ export function Screen_Home({navigation}) {
           pos_array_timestamps, set_pos_array_timestamps,
           setCoveredDistance,
           mapRef, mapData, setMapData, 
-          runState,
+          runState, runStateRef
 
   } = useAppState();
   const prevBoolRecordLocations = useRef(bool_record_locations);
-  const prevBoolUpdateLocations = useRef(bool_update_locations);   
+  const prevBoolUpdateLocations = useRef(bool_update_locations);
+  const [askForRecoverRun, setAskForRecoverRun] = useState(true);
+
+  const handleDeleteRecoveredRun = () => {
+    const deleteRecoveredRun = async () => {
+      await Storage.clearLocations();
+    }
+    deleteRecoveredRun();
+    setAskForRecoverRun(false);
+  };
+  const handleRecoverRun = () => {
+    const af1 = async () => {
+      set_pos_array_timestamps({
+        initial: arr_location_history[0]['timestamp'],
+        final: arr_location_history[1]['timestamp'],
+      });
+    }
+    const af2 = async () => {
+      for (let i=0; i < arr_location_history.length - 1; i++) {
+        updateMapInformation(mapData, setMapData, true, simulationParams, arr_location_history[i]);
+      }
+    }
+    const recoverRecoveredRun = async () => {
+      await loadAutoSavedLocations(arr_location_history);
+      //now make the calculations and set map etc.
+      //await af1();
+      //console.log("pos_array_timestamps:",pos_array_timestamps)
+      //await update_pos_array(arr_location_history, pos_array_kalman, pos_array_diffs, pos_array_timestamps, set_pos_array_timestamps);
+      // await updateDistances(arr_location_history, (bool_record_locations || !simulationParams.isPaused), pos_array_diffs, current_location, setCoveredDistance);
+      // await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[0]);
+      // await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[1]);
+      // await updateCalcedResults(pos_array_diffs, stDict, setStDict, "time", CALC_TIMES_FIXED[2]);
+      // await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[0]);
+      // await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[1]);
+      // await updateCalcedResults(pos_array_diffs, stDict, setStDict, "distance", CALC_DISTANCES_FIXED[2]);
+      // await af2();
+      // set_current_location(arr_location_history[arr_location_history.length - 1]);
+    }
+    recoverRecoveredRun();
+    setAskForRecoverRun(false);
+  };
+
+  useEffect(() => {
+    const checkIfAnyRecoveredRun = async () => {
+      const hist_from_storage = await Storage.getLocations()
+      setAskForRecoverRun(hist_from_storage.length > 0 && runState==="initial")
+    }
+    checkIfAnyRecoveredRun();
+  }, []);
 
   // useEffect for getting permissions
   useEffect (() => {
@@ -44,7 +94,7 @@ export function Screen_Home({navigation}) {
     }
     _getPermits()
     .catch(console.error);
-  }, [])
+  }, []);
 
   useEffect(() => {
     const checkifregistered = async () => {
@@ -52,7 +102,7 @@ export function Screen_Home({navigation}) {
       console.log('[useEffect001]-', 'Currently registered tasks', registeredTasks);
     }
 
-    define_tracking_job(set_current_location);
+    define_tracking_job(set_current_location, runStateRef);
     checkifregistered();
     
   }, []);
@@ -92,6 +142,7 @@ export function Screen_Home({navigation}) {
   // useEffect runState effecting enable_record_locations and enable_update_locations
   useEffect(() => {
     console.log("runState:",runState)
+    runStateRef.current = runState;
     if (runState==="paused" || runState==="finish")
     { 
       enable_record_locations(false);
@@ -137,8 +188,6 @@ export function Screen_Home({navigation}) {
       const first_if = (bool_record_locations || !simulationParams.isPaused) && (current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"]);
       //console.log("fetchData:bool_record_locations(",bool_record_locations,"), simulationParams.isPaused(",simulationParams.isPaused,")");
       //console.log("current_location.coords.accuracy(",current_location.coords.accuracy,")");
-      if (bool_record_locations && current_location.coords.accuracy < FIXED_DISTANCES["ALLOWED_COORD_ACCURACY"])
-        await addLocation(current_location, arr_location_history);
       //console.log("try fetchData ", isCalculating, bool_record_locations);
       if (first_if) {
         await updateLocationHistory(arr_location_history, bool_record_locations, simulationParams.isPaused, current_location);
@@ -252,31 +301,45 @@ export function Screen_Home({navigation}) {
   return (
     <>
     
-    <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#555" }}>
-      <BT_Image_Clickable renderBool={true} top={tops[0]} left="10%" 
-                          size_perc={0.20} nav={navigation} page_name="Speeds" 
-                          page_navigate_str="GPS_Debug" display_page_mode="SpeedScreens" 
-                          image_name='Speeds' imageTintColor='red' textColor='#fff'/>
-      <BT_Image_Clickable renderBool={true} top={tops[0]} left="40%" 
-                          size_perc={0.20} nav={navigation} page_name="Maps" 
-                          page_navigate_str="GPS_Debug" display_page_mode="MapScreen" 
-                          image_name='Maps' imageTintColor={undefined} textColor='#fff'/>
-      <BT_Image_Clickable renderBool={true} top={tops[0]} left="70%" 
-                          size_perc={0.20} nav={navigation} page_name="Simulate" 
-                          page_navigate_str="GPS_Debug" display_page_mode="SimulateScreen"  
-                          image_name='Simulate' imageTintColor={undefined} textColor='#fff'/>
-      <BT_Image_Clickable renderBool={true} top={tops[1]} left="10%" 
-                          size_perc={0.20} nav={navigation} page_name="Interval" 
-                          page_navigate_str="GPS_Debug" display_page_mode="PaceBlockScreen"
-                          image_name='Interval' imageTintColor={undefined} textColor='#fff' />
-      <BT_Image_Clickable renderBool={true} top={tops[1]} left="40%" 
-                          size_perc={0.20} nav={navigation} page_name="Motivators" 
-                          page_navigate_str="Motivators" display_page_mode="Our Indomitable Run-Gurus"
-                          image_name='Motivators' imageTintColor={undefined} textColor='#fff'/>   
-      <BT_Circle_Clickable renderBool={true} top={tops[2]} left="10%" size_perc={0.25} nav={navigation} page_name="GPS Debug" page_navigate_str="GPS_Debug" display_page_mode="Debug Screen" />
-      <BT_Circle_Clickable renderBool={false} top={tops[2]} left="40%" size_perc={0.25} nav={navigation} page_name="Moving Pts" page_navigate_str="Moveable_Points" />
-      <BT_Circle_Clickable renderBool={false} top={tops[2]} left="70%" size_perc={0.25} nav={navigation} page_name="Screen Stack" page_navigate_str="Screen_Navigation" /> 
-    </View>
+    {askForRecoverRun ? (
+      <View style={{flex: 1, backgroundColor: "#fff",alignItems: "center",justifyContent: "center",}}>
+        <Dialog.Container visible={askForRecoverRun}>
+          <Dialog.Title>Recover last run?</Dialog.Title>
+          <Dialog.Description>
+            Last time you exited without saving your run. Want to recover it?
+          </Dialog.Description>
+          <Dialog.Button label="No" onPress={handleDeleteRecoveredRun} />
+          <Dialog.Button label="Yes" onPress={handleRecoverRun} />
+        </Dialog.Container>
+      </View>  
+
+    ):(
+      <View style={{ flex: 1, alignItems:"center", alignContent:"center", paddingTop: insets.top, backgroundColor: "#555" }}>
+        <BT_Image_Clickable renderBool={true} top={tops[0]} left="10%" 
+                            size_perc={0.20} nav={navigation} page_name="Speeds" 
+                            page_navigate_str="GPS_Debug" display_page_mode="SpeedScreens" 
+                            image_name='Speeds' imageTintColor='red' textColor='#fff'/>
+        <BT_Image_Clickable renderBool={true} top={tops[0]} left="40%" 
+                            size_perc={0.20} nav={navigation} page_name="Maps" 
+                            page_navigate_str="GPS_Debug" display_page_mode="MapScreen" 
+                            image_name='Maps' imageTintColor={undefined} textColor='#fff'/>
+        <BT_Image_Clickable renderBool={true} top={tops[0]} left="70%" 
+                            size_perc={0.20} nav={navigation} page_name="Simulate" 
+                            page_navigate_str="GPS_Debug" display_page_mode="SimulateScreen"  
+                            image_name='Simulate' imageTintColor={undefined} textColor='#fff'/>
+        <BT_Image_Clickable renderBool={true} top={tops[1]} left="10%" 
+                            size_perc={0.20} nav={navigation} page_name="Interval" 
+                            page_navigate_str="GPS_Debug" display_page_mode="PaceBlockScreen"
+                            image_name='Interval' imageTintColor={undefined} textColor='#fff' />
+        <BT_Image_Clickable renderBool={true} top={tops[1]} left="40%" 
+                            size_perc={0.20} nav={navigation} page_name="Motivators" 
+                            page_navigate_str="Motivators" display_page_mode="Our Indomitable Run-Gurus"
+                            image_name='Motivators' imageTintColor={undefined} textColor='#fff'/>   
+        <BT_Circle_Clickable renderBool={true} top={tops[2]} left="10%" size_perc={0.25} nav={navigation} page_name="GPS Debug" page_navigate_str="GPS_Debug" display_page_mode="Debug Screen" />
+        <BT_Circle_Clickable renderBool={false} top={tops[2]} left="40%" size_perc={0.25} nav={navigation} page_name="Moving Pts" page_navigate_str="Moveable_Points" />
+        <BT_Circle_Clickable renderBool={false} top={tops[2]} left="70%" size_perc={0.25} nav={navigation} page_name="Screen Stack" page_navigate_str="Screen_Navigation" /> 
+      </View>
+    )}
     </>
   );
 }

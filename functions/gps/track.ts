@@ -20,7 +20,7 @@ export async function isTracking(): Promise<boolean> {
 export async function startTracking() {
   await Location.startLocationUpdatesAsync(LOCATION_TRACKING_TASK_NAME, {
     accuracy: Location.Accuracy.BestForNavigation,
-    timeInterval: 2 * 1000,
+    timeInterval: 1000,
     // android behavior
     foregroundService: {
       notificationTitle: 'RuBY is active',

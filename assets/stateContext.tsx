@@ -26,8 +26,8 @@ interface StateContextType {
     bool_location_background_started:boolean;
     set_location_background_started: React.Dispatch<React.SetStateAction<boolean>>;
 
-    arr_location_history:Array<object>;
-    set_location_history: React.Dispatch<React.SetStateAction<Array<object>>>;
+    arr_location_history:Array<GPS_Data>;
+    set_location_history: React.Dispatch<React.SetStateAction<Array<GPS_Data>>>;
 
     pos_array_kalman:Array<object>;
     set_pos_array_kalman: React.Dispatch<React.SetStateAction<Array<object>>>;
@@ -53,6 +53,7 @@ interface StateContextType {
 
     runState: string;
     setRunState: React.Dispatch<React.SetStateAction<string>>;
+    runStateRef: React.MutableRefObject<string>;
 
     mapData: IMapData;
     mapRef: React.MutableRefObject<MapView | null>;
@@ -110,6 +111,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
     const [simulationParams, setSimulationParams] = useState<SimulationDict>(INIT_SIMULATION_PARAMS);
 
     const [runState, setRunState] = useState('initial');
+    const runStateRef = useRef(runState);
 
     const mapRef = useRef<MapView | null>(null);
     const [mapData, setMapData] = useState<IMapData>(INITIAL_MAP_DATA);
@@ -150,7 +152,7 @@ export const AppStateProvider: React.FC<Props> = ({ children }) => {
                 totalTime, setTotalTime,
 
                 simulationParams, setSimulationParams,
-                runState, setRunState,
+                runState, setRunState, runStateRef,
 
                 mapRef,
                 mapData, setMapData,

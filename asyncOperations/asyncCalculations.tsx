@@ -1,5 +1,5 @@
 import { update_pos_array, get_dist_covered } from '../asyncOperations/utils';
-import { SpeedTimeCalced, SpeedTimeCalced_Dict, stDict_hasKey, stDict_addEntry } from '../assets/types';
+import { SpeedTimeCalced, SpeedTimeCalced_Dict, stDict_hasKey, stDict_addEntry, GPS_Data } from '../assets/types';
 import { SPEED_TIME_CALCED_INIT } from '../assets/constants';
 import { calc_run_params } from '../asyncOperations/utils';
 
@@ -24,35 +24,30 @@ export const updateDistances = async (arr_location_history:object[], bool_record
     //console.log("ooooooooooooooooooooooooo3");
     return;
 };
-export const updateLocationHistory = async (arr_location_history:object[], bool_record_locations:boolean, simulationParamsisPaused:boolean, current_location:any) => {
+export const updateLocationHistory = async (arr_location_history:GPS_Data[], bool_record_locations:boolean, simulationParamsisPaused:boolean, current_location:any) => {
   //console.log("updateLocationHistory:bool_record_locations:",bool_record_locations);
   //console.log("updateLocationHistory:simulationParamsisPaused:",simulationParamsisPaused);
-  if (!simulationParamsisPaused) {
-      // we are in simulation mode
-      const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
-      if (current_location["timestamp"] !== lastTimestamp) {
-        arr_location_history.push(current_location);
-        if (arr_location_history[0]["coords"].accuracy == 0) {
-          //console.log("updateLocationHistory:removing 0::",arr_location_history[0]);
-          arr_location_history.shift();
-        }
-        //console.log("updateLocationHistory:add new::",arr_location_history.length);
+
+  const lastTimestamp = arr_location_history.length > 0 ? arr_location_history[arr_location_history.length - 1]["timestamp"] : null;
+  const loc_changed = current_location["timestamp"] !== lastTimestamp;
+  const append_to_history = loc_changed && ( !simulationParamsisPaused || (simulationParamsisPaused && bool_record_locations ));
+  
+  if (append_to_history)
+  {
+      arr_location_history.push(current_location);
+      if (arr_location_history[0]["coords"].accuracy == 0) {
+        console.log("updateLocationHistory:removing 0::",arr_location_history[0]);
+        arr_location_history.shift();
       }
-      else
-      {
-        //console.log("POS COUNT :t1:",current_location["timestamp"],",t2:",lastTimestamp);
-      }
-      //console.log("SIM_MODE:updateLocationHistory:arr_location_history.le is now::",arr_location_history.length);
-      return;
-    }
-    // we are not in simulation mode
-    const hist_from_storage = await Storage.getLocations()
-    console.log("ooooooooooooooooooooooooo1-updateLocationHistory");
-    for (let i = arr_location_history.length; i < hist_from_storage.length; i++) {
-      arr_location_history.push(hist_from_storage[i]);
-    }
-    console.log("arr_location_history.le is now::",arr_location_history.length);
-    return;
+      //console.log("updateLocationHistory:add new::",arr_location_history.length);    
+  }
+
+  // auto-save every 50 locations if not in simulation mode
+  if (simulationParamsisPaused && arr_location_history.length>0 && arr_location_history.length%50 === 0) {
+    await Storage.setLocations(arr_location_history);
+    console.log('[storage]', 'auto-saved location -', arr_location_history.length, 'stored locations');
+  }
+  
 };
 const initialize_post_dict = async (arr_location_history: any[], set_pos_array_timestamps:React.Dispatch<React.SetStateAction<object>>): Promise<any> => {
   if (!arr_location_history || arr_location_history.length === 0) {

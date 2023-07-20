@@ -1,7 +1,5 @@
-import { LocationObject } from "expo-location";
-import { PaceBlockDict, SimulationDict, SpeedTimeCalced } from "./types";
+import { GPS_Data, PaceBlockDict, SimulationDict, SpeedTimeCalced } from "./types";
 import { IMapData } from "./interface_definitions";
-import { useRef } from "react";
 
 export const CALC_DISTANCES_FIXED = [200, 100, 50];
 export const CALC_TIMES_FIXED = [60, 30, 10];
@@ -98,7 +96,7 @@ export const INITIAL_MAP_DATA: IMapData = {
     },
   };
 
-export type OfflineLocationData = {locations: LocationObject[];};
+export type OfflineLocationData = {locations: GPS_Data[];};
 export const LOCATION_TRACKING_TASK_NAME = 'rubytrackloc';
 
 export const INIT_PACE_BLOCK:PaceBlockDict = {
