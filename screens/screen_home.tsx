@@ -339,7 +339,7 @@ export function Screen_Home({navigation}) {
         <BT_Circle_Clickable renderBool={false} top={tops[2]} left="40%" size_perc={0.25} nav={navigation} page_name="Moving Pts" page_navigate_str="Moveable_Points" />
         <BT_Circle_Clickable renderBool={false} top={tops[2]} left="70%" size_perc={0.25} nav={navigation} page_name="Screen Stack" page_navigate_str="Screen_Navigation" /> 
 
-        <BT_Circle_Clickable renderBool={true} top={tops[3]} left="10%" size_perc={0.25} nav={navigation} page_name="Login" page_navigate_str="Login" display_page_mode="Login Screen" />
+        <BT_Circle_Clickable renderBool={true} top={tops[3]} left="10%" size_perc={0.25} nav={navigation} page_name="Loginv2" page_navigate_str="Login" display_page_mode="Login Screen" />
 
       </View>
     )}
