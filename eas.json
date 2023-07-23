@@ -27,9 +27,6 @@
   },
   "submit": {
     "production": {
-      "android": {
-        "buildType": "app-bundle"
-      }
     }
   }
 }
