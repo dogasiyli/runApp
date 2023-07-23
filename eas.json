@@ -15,7 +15,7 @@
       "distribution": "internal",
       "channel": "preview4c",
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       }
     },
     "production": {
