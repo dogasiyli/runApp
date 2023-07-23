@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.doga.siyli.runApp"
+      "bundleIdentifier": "com.doga.siyli.runapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -34,7 +34,7 @@
           "apiKey": "AIzaSyB0a_1ozE9axMeN9DJxmJeCvKbvTKPJTsQ"
         }
       },
-      "package": "com.doga.siyli.runApp",
+      "package": "com.doga.siyli.runapp",
       "versionCode": 5
     },
     "web": {
@@ -52,6 +52,6 @@
       "url": "https://u.expo.dev/429410b1-bdb5-4d2d-80cc-e61aa13c0fdb"
     },
     "owner": "doga.siyli",
-    "scheme": "com.doga.siyli.runApp"
+    "scheme": "com.doga.siyli.runapp"
   }
 }
