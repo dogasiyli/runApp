@@ -11,9 +11,9 @@
         "buildType": "app-bundle"
       }
     },
-    "preview3": {
+    "preview4n": {
       "distribution": "internal",
-      "channel": "preview3",
+      "channel": "preview4c",
       "android": {
         "buildType": "apk"
       }
@@ -27,9 +27,6 @@
   },
   "submit": {
     "production": {
-      "android": {
-        "buildType": "app-bundle"
-      }
     }
   }
 }
