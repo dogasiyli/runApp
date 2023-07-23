@@ -20,6 +20,7 @@
     "expo-auth-session": "^5.0.2",
     "expo-camera": "~13.4.2",
     "expo-crypto": "^12.4.1",
+    "expo-dev-client": "~2.4.6",
     "expo-location": "~16.1.0",
     "expo-media-library": "^15.2.3",
     "expo-permissions": "^14.1.1",
